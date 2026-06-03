@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Calendar - Complete Notifications</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .fc-event { 
+            cursor: pointer; 
+            transition: transform 0.1s;
+            z-index: 10;
+            position: relative;
+        }
+        .fc-event:hover { 
+            transform: scale(1.02); 
+        }
+        .fc-daygrid-day { 
+            cursor: pointer !important; 
+            transition: all 0.2s ease; 
+        }
+        .fc-daygrid-day:hover { 
+            background: rgba(59,130,246,0.05) !important; 
+            z-index: 5; 
+            position: relative; 
+        }
+
+        .fc-daygrid-event {
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 20;
+        }
+        .fc-daygrid-day-frame {
+            cursor: pointer !important;
+            position: relative;
+        }
+        .fc-daygrid-day-top {
+            pointer-events: none;
+        }
+        .fc-daygrid-day-events {
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 15;
+        }
+
+        /* 🟢 GREEN: Everyone is free */
+        .fc-daygrid-day.everyone-free-highlight {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+            border: 2px solid #15803d !important;
+            box-shadow: 0 2px 8px rgba(34,197,94,0.4) !important;
+            animation: pulse-green 2s infinite;
+        }
+        
+        /* 🔵 BLUE: You are free (private) */
+        .fc-daygrid-day.you-free-highlight {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+            border: 2px solid #1d4ed8 !important;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.4) !important;
+        }
+        
+        /* 🟡 YELLOW: Mutual free time */
+        .fc-daygrid-day.mutual-free-highlight {
+            background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%) !important;
+            border: 2px solid #a16207 !important;
+            box-shadow: 0 2px 8px rgba(234,179,8,0.4) !important;
+        }
+        
+        /* 🔴 RED: You are busy */
+        .fc-daygrid-day.you-busy-highlight {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+            border: 2px solid #b91c1c !important;
+            box-shadow: 0 2px 8px rgba(239,68,68,0.4) !important;
+        }
+        
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+        }
+        
+        .fc-daygrid-day.everyone-free-highlight .fc-daygrid-day-number,
+        .fc-daygrid-day.you-free-highlight .fc-daygrid-day-number,
+        .fc-daygrid-day.mutual-free-highlight .fc-daygrid-day-number,
+        .fc-daygrid-day.you-busy-highlight .fc-daygrid-day-number {
+            background: rgba(0,0,0,0.2) !important; color: white !important;
+            font-weight: bold !important; border-radius: 50% !important;
+            width: 28px !important; display: inline-flex !important;
+            align-items: center !important; justify-content: center !important;
+        }
+        
+        /* ⚪ WHITE: Events */
+        .fc-event {
+            background: white !important;
+            border: 1px solid #d1d5db !important;
+            color: #1f2937 !important;
+            font-weight: 600 !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+        }
+        .fc-event:hover {
+            background: #f9fafb !important;
+            transform: scale(1.02);
+        }
+        .fc-event .fc-event-title {
+            color: #1f2937 !important;
+        }
+        
+        .fc-daygrid-day-number {
+            font-weight: 600 !important;
+            z-index: 2 !important;
+            position: relative !important;
+        }
+        
+        .fc {
+            width: 100% !important;
+        }
+        
+        @media (max-width: 768px) {
+            .fc .fc-toolbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .fc .fc-toolbar-title {
+                font-size: 1.2em !important;
+            }
+            .fc .fc-button {
+                padding: 0.4em 0.8em !important;
+                font-size: 0.8em !important;
+            }
+            .fc-daygrid-day-number {
+                font-size: 14px !important;
+            }
+            .fc-daygrid-day-frame {
+                min-height: 70px !important;
+            }
+            .fc-event-title {
+                font-size: 10px !important;
+            }
+            button {
+                min-height: 44px;
+            }
+            input, select {
+                font-size: 16px !important;
+            }
+            .notification-panel {
+                position: fixed;
+                top: 60px;
+                right: 10px;
+                left: 10px;
+                width: auto;
+                max-width: none;
+            }
+        }
+        
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            padding: 0 4px;
+        }
+        .notification-panel {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            width: 350px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+        }
+        
+        /* Fixed notification header - good contrast */
+        .notification-header {
+            background: #3b82f6 !important;
+            color: white !important;
+            padding: 12px !important;
+            font-weight: bold !important;
+            font-size: 14px !important;
+            border-radius: 12px 12px 0 0 !important;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .notification-item {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
+        .notification-item.unread {
+            background: #eff6ff;
+        }
+        .notification-item .title {
+            font-weight: 600;
+            font-size: 13px;
+            color: #1f2937;
+        }
+        .notification-item .message {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        .notification-item .time {
+            font-size: 10px;
+            color: #9ca3af;
+            margin-top: 4px;
+        }
+        
+        .friend-list-item, .request-list-item {
+            transition: all 0.2s;
+        }
+        .friend-list-item:hover, .request-list-item:hover {
+            background: #e5e7eb;
+        }
+        
+        .tab-active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+        
+        @media (max-width: 640px) {
+            #dayModal, #eventModal, #friendsModal, #adminModal {
+                align-items: flex-end !important;
+            }
+            #dayModal > div, #eventModal > div, #friendsModal > div, #adminModal > div {
+                border-radius: 20px 20px 0 0 !important;
+                max-height: 85vh !important;
+            }
+        }
+        
+        button, .fc-button {
+            touch-action: manipulation;
+        }
+        
+        .admin-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .admin-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .admin-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .admin-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .admin-toggle-slider {
+            background-color: #f59e0b;
+        }
+        input:checked + .admin-toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .admin-view-active {
+            outline: 3px solid #f59e0b !important;
+            outline-offset: -1px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-2 sm:p-4">
+<div id="app" class="max-w-7xl mx-auto">
+
+    <!-- Login -->
+    <div id="loginScreen" class="bg-white rounded-2xl shadow-xl p-8 text-center">
+        <div class="mb-6"><span class="text-6xl">🗓️</span></div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Calendar</h1>
+        <p class="text-gray-500 mb-2">Find mutual free time with friends</p>
+        <p class="text-xs text-gray-400 mb-8">🔔 Get notifications for requests, events, and matches</p>
+        <button id="googleLoginBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition shadow-md w-full sm:w-auto">
+            🚀 Sign in with Google
+        </button>
+    </div>
+
+    <!-- Main -->
+    <div id="mainScreen" class="hidden">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-3 sm:p-4">
+                <div class="flex justify-between items-center flex-wrap gap-2">
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold">🗓️ Calendar</h1>
+                        <p id="userEmail" class="text-xs sm:text-sm opacity-90 truncate max-w-[150px] sm:max-w-none"></p>
+                        <p id="adminStatusBadge" class="text-xs font-bold mt-1 hidden">🔧 ADMIN MODE ACTIVE</p>
+                    </div>
+                    <div class="flex gap-2 sm:gap-3 items-center">
+                        <div id="adminToggleContainer" class="hidden items-center gap-2 bg-white/20 px-3 py-1.5 rounded-lg">
+                            <span class="text-xs font-medium">👁️ Admin View</span>
+                            <label class="admin-toggle">
+                                <input type="checkbox" id="adminViewToggle">
+                                <span class="admin-toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div id="friendsBtnContainer" class="relative">
+                            <button id="friendsBtn" class="bg-white/20 hover:bg-white/30 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition">
+                                👥 Friends
+                            </button>
+                            <span id="requestBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">!</span>
+                        </div>
+                        <button id="adminBtn" class="bg-red-500/30 hover:bg-red-500/50 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition hidden">
+                            🛠️ Admin
+                        </button>
+                        <div id="notificationBell" class="notification-bell relative">
+                            <span class="text-xl sm:text-2xl">🔔</span>
+                            <span id="notificationBadge" class="notification-badge hidden">0</span>
+                        </div>
+                        <div id="notificationPanel" class="notification-panel">
+                            <div class="notification-header">📢 Notifications</div>
+                            <div id="notificationList" class="max-h-96 overflow-y-auto">
+                                <div class="text-center text-gray-400 text-sm p-4">No notifications yet</div>
+                            </div>
+                            <button id="clearNotificationsBtn" class="w-full text-center text-xs text-gray-600 py-2 hover:bg-gray-100 transition border-t">Clear all</button>
+                        </div>
+                        <button id="logoutBtn" class="bg-white/20 hover:bg-white/30 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition">
+                            Sign out
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-2 sm:mt-3 pt-2 flex gap-2 sm:gap-4 text-xs text-white/90 flex-wrap border-t border-white/20">
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-green-400 inline-block"></span> Everyone free</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-blue-400 inline-block"></span> You're free </span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-yellow-400 inline-block"></span> Someone is also free</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-red-400 inline-block"></span>  You're busy</span>
+                    <span class="flex items-center gap-1"><span class="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-white border border-gray-300 inline-block"></span> Event</span>
+                </div>
+            </div>
+
+            <div id="calendar" class="p-2 sm:p-4" style="min-height: 500px;"></div>
+
+            <div id="statsBar" class="hidden px-3 sm:px-4 pb-3 pt-2 text-xs sm:text-sm text-gray-500 border-t bg-gray-50">
+                <div class="flex gap-4 sm:gap-6 flex-wrap">
+                    <span>🌟 <span id="freeDaysCount">0</span> days everyone is free</span>
+                    <span>👥 <span id="memberCount">0</span> friends</span>
+                    <span id="adminStats" class="hidden text-orange-600">🔍 Admin: Seeing ALL users</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Friends Modal -->
+    <div id="friendsModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-5 sm:p-6 max-h-[85vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-800">👥 Friends</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Connect to see mutual free time</p>
+                </div>
+                <button id="closeFriendsModal" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="flex border-b mb-4">
+                <button id="friendsTabBtn" class="tab-active flex-1 py-2 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-800 transition">My Friends</button>
+                <button id="requestsTabBtn" class="flex-1 py-2 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-800 transition">Requests</button>
+                <button id="searchTabBtn" class="flex-1 py-2 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-800 transition">Find</button>
+            </div>
+            
+            <div id="friendsTab" class="">
+                <div id="friendsList" class="space-y-2 max-h-64 overflow-y-auto">
+                    <div class="text-center text-gray-400 text-sm p-4">No friends yet. Send some requests!</div>
+                </div>
+            </div>
+            
+            <div id="requestsTab" class="hidden">
+                <div id="requestsList" class="space-y-2 max-h-64 overflow-y-auto">
+                    <div class="text-center text-gray-400 text-sm p-4">No pending requests</div>
+                </div>
+            </div>
+            
+            <div id="searchTab" class="hidden">
+                <div class="mb-3">
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Find by email</label>
+                    <div class="flex gap-2">
+                        <input type="email" id="searchEmailInput" placeholder="friend@example.com" class="flex-1 px-3 py-2 border rounded-lg text-sm sm:text-base">
+                        <button id="searchUserBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition whitespace-nowrap">Search</button>
+                    </div>
+                </div>
+                <div id="searchResult" class="mt-3 p-3 bg-gray-50 rounded-lg hidden"></div>
+                <p class="text-xs text-gray-400 mt-3">💡 Users must have logged in at least once</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-5 sm:p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-800">🛠️ Admin Panel</h3>
+                    <p class="text-xs sm:text-sm text-gray-500">Manage users and view all data</p>
+                </div>
+                <button id="closeAdminModal" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div class="mb-4">
+                <h4 class="font-semibold text-gray-700 mb-2 text-sm">All registered users</h4>
+                <div id="allUsersList" class="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-2">
+                    <div class="text-center text-gray-400 text-sm p-4">Loading users...</div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <h4 class="font-semibold text-gray-700 mb-2 text-sm">Admin Actions</h4>
+                <button id="exportAllDataBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-semibold transition mb-2">
+                    📥 Export All Data (JSON)
+                </button>
+                <p class="text-xs text-gray-400">Use Admin View toggle to see everyone's availability</p>
+            </div>
+            
+            <button id="closeAdminModalBtn" class="w-full bg-gray-200 hover:bg-gray-300 py-2 rounded-lg font-semibold transition">Close</button>
+        </div>
+    </div>
+
+    <!-- Day Modal -->
+    <div id="dayModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-lg w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 id="dayModalTitle" class="text-lg sm:text-xl font-bold text-gray-800"></h3>
+                    <p id="dayModalSubtitle" class="text-xs sm:text-sm text-gray-500 mt-1"></p>
+                </div>
+                <button id="closeDayModal" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+
+            <div id="mutualFreeSection" class="hidden mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h4 class="font-semibold text-yellow-800 mb-2 text-sm">👥 Friends also free today</h4>
+                <div id="mutualFreeList" class="space-y-1"></div>
+            </div>
+            
+            <div id="adminViewSection" class="hidden mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                <h4 class="font-semibold text-purple-800 mb-2 text-sm">🔍 Admin View - All Users</h4>
+                <div id="allUsersFreeList" class="space-y-1 max-h-40 overflow-y-auto"></div>
+            </div>
+
+            <div class="mb-5 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                <h4 class="font-semibold text-gray-700 mb-2 text-sm">🎯 Your Availability</h4>
+                <div id="currentAvailabilityStatus" class="mb-3 text-xs sm:text-sm"></div>
+                <div id="myBlocksForDay" class="mb-3 space-y-1"></div>
+                <div class="flex gap-2 mb-3">
+                    <button id="setFreeBtn" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-semibold text-sm transition">🔵 Free all day</button>
+                    <button id="setBusyBtn" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-semibold text-sm transition">🔴 Busy all day</button>
+                    <button id="clearAvailabilityBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 rounded-lg font-semibold text-sm transition">Clear</button>
+                </div>
+                <div>
+                    <button id="toggleTimePicker" class="w-full text-sm text-blue-600 hover:text-blue-800 font-medium py-2 flex items-center justify-center gap-1 border border-blue-200 rounded-lg hover:bg-blue-50 transition">
+                        <span id="timePickerArrow">▶</span> Add specific time block
+                    </button>
+                    <div id="timePicker" class="hidden mt-3 p-3 bg-white border rounded-lg shadow-sm">
+                        <div class="flex gap-2 items-end flex-wrap">
+                            <div class="flex-1 min-w-[80px]">
+                                <label class="block text-xs text-gray-500 mb-1">From</label>
+                                <input type="time" id="blockFrom" value="09:00" class="w-full px-2 py-2 border rounded text-sm">
+                            </div>
+                            <div class="flex-1 min-w-[80px]">
+                                <label class="block text-xs text-gray-500 mb-1">To</label>
+                                <input type="time" id="blockTo" value="17:00" class="w-full px-2 py-2 border rounded text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Type</label>
+                                <select id="blockType" class="px-2 py-2 border rounded text-sm">
+                                    <option value="free">🟢 Free</option>
+                                    <option value="busy">🔴 Busy</option>
+                                </select>
+                            </div>
+                            <button id="addBlockBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-semibold transition">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <h4 class="font-semibold text-gray-700 mb-2 text-sm">📅 Events</h4>
+                <div id="eventsOnDay" class="space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+
+            <div class="border-t pt-4">
+                <h4 class="font-semibold text-gray-700 mb-3 text-sm">➕ Add Event</h4>
+                <div class="space-y-2">
+                    <input type="text" id="dayModalEventTitle" placeholder="Movie night, hike, dinner..." class="w-full px-3 py-2 border rounded-lg text-sm">
+                    <div class="flex gap-2">
+                        <input type="time" id="dayModalEventTime" class="flex-1 px-3 py-2 border rounded-lg text-sm">
+                        <select id="dayModalEventMood" class="flex-1 px-3 py-2 border rounded-lg text-sm">
+                            <option value="🎉">🎉 Party</option>
+                            <option value="🍿">🍿 Chill</option>
+                            <option value="🏋️">🏋️ Active</option>
+                            <option value="☕">☕ Coffee</option>
+                        </select>
+                    </div>
+                    <button id="addEventFromDayBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold text-sm transition">+ Add Event</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event RSVP Modal -->
+    <div id="eventModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-5 sm:p-6">
+            <h3 id="modalTitle" class="text-lg sm:text-xl font-bold mb-3"></h3>
+            <div id="modalDetails" class="text-gray-600 mb-4 text-sm"></div>
+            <div class="flex gap-3 mb-4">
+                <button id="rsvpYes" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-semibold transition">✅ Going</button>
+                <button id="rsvpMaybe" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg font-semibold transition">🤔 Maybe</button>
+                <button id="rsvpNo" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-semibold transition">❌ Can't</button>
+            </div>
+            <button id="closeModal" class="w-full bg-gray-200 hover:bg-gray-300 py-2 rounded-lg font-semibold transition">Close</button>
+        </div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, getDoc, setDoc, deleteDoc, getDocs, query, orderBy, limit }
+        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXJ-H6wh_8vI5f1_gTcIpMgoiqGzc3cMc",
+        authDomain: "final-destination-calendar.firebaseapp.com",
+        projectId: "final-destination-calendar",
+        storageBucket: "final-destination-calendar.firebasestorage.app",
+        messagingSenderId: "684548386292",
+        appId: "1:684548386292:web:4b3933d57f4e352a2a1da1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentCalendar = null;
+    let currentUser = null;
+    let currentEventId = null;
+    let currentSelectedDay = null;
+    let allEvents = [];
+    let allSchedules = [];
+    let myFriends = [];
+    let pendingRequests = [];
+    let sentRequests = [];
+    let notifications = [];
+    let isEventClick = false;
+    let isAdmin = false;
+    let adminViewEnabled = false;
+    let lastProcessedState = { events: {}, schedules: {}, friendRequests: {} };
+
+    // ─── Helper Functions ────────────────────────────────────────────────────
+
+    function getRelevantSchedules() {
+        if (!currentUser) return [];
+        if (isAdmin && adminViewEnabled) {
+            return allSchedules;
+        }
+        return allSchedules.filter(s => 
+            s.email === currentUser.email || myFriends.includes(s.email)
+        );
+    }
+    
+    function getRelevantEvents() {
+        if (!currentUser) return [];
+        if (isAdmin && adminViewEnabled) {
+            return allEvents;
+        }
+        const relevantEmails = [currentUser.email, ...myFriends];
+        return allEvents.filter(ev => relevantEmails.includes(ev.createdBy));
+    }
+
+    function calculateDayColors() {
+        if (!currentUser) return { youFree: {}, youBusy: {}, mutualFree: {}, everyoneFree: {} };
+        
+        const relevantSchedules = getRelevantSchedules();
+        const mySchedule = relevantSchedules.find(s => s.email === currentUser.email);
+        const myFreeBlocks = (mySchedule?.blocks || []).filter(b => b.type === 'free');
+        const myBusyBlocks = (mySchedule?.blocks || []).filter(b => b.type === 'busy');
+        
+        const friendSchedules = relevantSchedules.filter(s => s.email !== currentUser.email);
+        
+        const youFree = {};
+        const youBusy = {};
+        const mutualFree = {};
+        const everyoneFree = {};
+        
+        myFreeBlocks.forEach(block => { youFree[block.date] = true; });
+        myBusyBlocks.forEach(block => { youBusy[block.date] = true; });
+        
+        for (const friend of friendSchedules) {
+            const friendFreeBlocks = (friend.blocks || []).filter(b => b.type === 'free');
+            friendFreeBlocks.forEach(block => {
+                if (youFree[block.date]) {
+                    if (!mutualFree[block.date]) {
+                        mutualFree[block.date] = [];
+                    }
+                    mutualFree[block.date].push(friend.email.split('@')[0]);
+                }
+            });
+        }
+        
+        for (const date in mutualFree) {
+            const allFriendsHaveMutual = friendSchedules.length > 0 && friendSchedules.every(friend => {
+                const friendFreeBlocks = (friend.blocks || []).filter(b => b.type === 'free');
+                return friendFreeBlocks.some(b => b.date === date);
+            });
+            if (allFriendsHaveMutual) {
+                everyoneFree[date] = true;
+            }
+        }
+        
+        return { youFree, youBusy, mutualFree, everyoneFree };
+    }
+
+    // ─── Enhanced Notification System ────────────────────────────────────────
+
+    function addNotification(title, message, type, relatedId = null) {
+        const newNotif = {
+            id: Date.now(),
+            title,
+            message,
+            type,
+            relatedId,
+            timestamp: new Date().toISOString(),
+            read: false
+        };
+        
+        notifications.unshift(newNotif);
+        if (notifications.length > 100) notifications.pop();
+        
+        if (currentUser) {
+            localStorage.setItem(`notifications_${currentUser.email}`, JSON.stringify(notifications));
+        }
+        
+        updateNotificationUI();
+        
+        // Browser notification if page is hidden
+        if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+            new Notification(title, { body: message });
+        }
+    }
+    
+    // Check for new friend requests
+    function checkForNewFriendRequests(oldPending, newPending) {
+        if (!currentUser) return;
+        
+        const newRequests = newPending.filter(email => !oldPending.includes(email));
+        for (const email of newRequests) {
+            const name = email.split('@')[0];
+            addNotification(
+                "👋 New Friend Request!",
+                `${name} sent you a friend request`,
+                "friend_request",
+                email
+            );
+        }
+    }
+    
+    // Check for new events (admin sees all, users see only from friends)
+    function checkForNewEvents(oldEvents, newEvents) {
+        if (!currentUser) return;
+        
+        for (const newEvent of newEvents) {
+            const exists = oldEvents.some(e => e.id === newEvent.id);
+            if (!exists) {
+                // Admin sees all events
+                if (isAdmin && adminViewEnabled) {
+                    const creatorName = newEvent.createdBy?.split('@')[0] || 'Someone';
+                    const formattedDate = new Date(newEvent.date + 'T12:00:00').toLocaleDateString('en-IE', { 
+                        weekday: 'short', month: 'short', day: 'numeric' 
+                    });
+                    addNotification(
+                        "📅 New Event (Admin View)",
+                        `${creatorName} added "${newEvent.title}" on ${formattedDate}`,
+                        "admin_event",
+                        newEvent.id
+                    );
+                } 
+                // Regular users: only see events from friends or themselves
+                else if (newEvent.createdBy === currentUser.email || myFriends.includes(newEvent.createdBy)) {
+                    const creatorName = newEvent.createdBy === currentUser.email ? 'You' : newEvent.createdBy.split('@')[0];
+                    const formattedDate = new Date(newEvent.date + 'T12:00:00').toLocaleDateString('en-IE', { 
+                        weekday: 'short', month: 'short', day: 'numeric' 
+                    });
+                    
+                    if (newEvent.createdBy === currentUser.email) {
+                        addNotification(
+                            "✅ Event Created",
+                            `You added "${newEvent.title}" on ${formattedDate}`,
+                            "my_event",
+                            newEvent.id
+                        );
+                    } else {
+                        addNotification(
+                            "📅 New Event",
+                            `${creatorName} added "${newEvent.title}" on ${formattedDate}`,
+                            "friend_event",
+                            newEvent.id
+                        );
+                    }
+                }
+            }
+        }
+    }
+    
+    // Check for new mutual free time matches
+    function checkForNewMatches(oldSchedules, newSchedules) {
+        if (!currentUser) return;
+        if (isAdmin && adminViewEnabled) return;
+        
+        const myOldSchedule = oldSchedules.find(s => s.email === currentUser.email);
+        const myNewSchedule = newSchedules.find(s => s.email === currentUser.email);
+        
+        if (!myOldSchedule && !myNewSchedule) return;
+        
+        const myOldFree = new Set((myOldSchedule?.blocks || []).filter(b => b.type === 'free').map(b => b.date));
+        const myNewFree = new Set((myNewSchedule?.blocks || []).filter(b => b.type === 'free').map(b => b.date));
+        
+        // Check each friend's new free blocks
+        for (const newSchedule of newSchedules) {
+            if (newSchedule.email === currentUser.email) continue;
+            
+            const oldSchedule = oldSchedules.find(s => s.email === newSchedule.email);
+            const newFreeBlocks = (newSchedule.blocks || []).filter(b => b.type === 'free');
+            const oldFreeBlocks = (oldSchedule?.blocks || []).filter(b => b.type === 'free') || [];
+            
+            for (const newBlock of newFreeBlocks) {
+                const existed = oldFreeBlocks.some(b => b.date === newBlock.date && b.from === newBlock.from && b.to === newBlock.to);
+                if (!existed && myNewFree.has(newBlock.date)) {
+                    const friendName = newSchedule.email.split('@')[0];
+                    const formattedDate = new Date(newBlock.date + 'T12:00:00').toLocaleDateString('en-IE', { 
+                        weekday: 'short', month: 'short', day: 'numeric' 
+                    });
+                    addNotification(
+                        "🎉 Mutual Free Time!",
+                        `${friendName} is also free on ${formattedDate} at ${newBlock.from}–${newBlock.to}`,
+                        "mutual_match",
+                        newBlock.date
+                    );
+                }
+            }
+        }
+    }
+    
+    // Check for friend acceptances
+    function checkForFriendAcceptances(oldFriends, newFriends) {
+        if (!currentUser) return;
+        
+        const newFriend = newFriends.find(f => !oldFriends.includes(f));
+        if (newFriend) {
+            const name = newFriend.split('@')[0];
+            addNotification(
+                "✅ Friend Request Accepted!",
+                `${name} accepted your friend request`,
+                "friend_accepted",
+                newFriend
+            );
+        }
+    }
+    
+    function markAllAsRead() {
+        notifications.forEach(n => n.read = true);
+        if (currentUser) {
+            localStorage.setItem(`notifications_${currentUser.email}`, JSON.stringify(notifications));
+        }
+        updateNotificationUI();
+    }
+    
+    function updateNotificationUI() {
+        const badge = document.getElementById('notificationBadge');
+        const unreadCount = notifications.filter(n => !n.read).length;
+        
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+        
+        const list = document.getElementById('notificationList');
+        if (!list) return;
+        
+        if (notifications.length === 0) {
+            list.innerHTML = '<div class="text-center text-gray-400 text-sm p-4">No notifications yet</div>';
+            return;
+        }
+        
+        const getIcon = (type) => {
+            switch(type) {
+                case 'friend_request': return '👋';
+                case 'friend_accepted': return '✅';
+                case 'mutual_match': return '🎉';
+                case 'friend_event': return '📅';
+                case 'my_event': return '✅';
+                case 'admin_event': return '🔍';
+                default: return '📢';
+            }
+        };
+        
+        list.innerHTML = notifications.map(n => `
+            <div class="notification-item ${n.read ? '' : 'unread'}" data-id="${n.id}" data-related="${n.relatedId || ''}" data-type="${n.type}">
+                <div class="title">${getIcon(n.type)} ${n.title}</div>
+                <div class="message">${n.message}</div>
+                <div class="time">${formatTimeAgo(n.timestamp)}</div>
+            </div>
+        `).join('');
+        
+        document.querySelectorAll('.notification-item').forEach(el => {
+            el.addEventListener('click', () => {
+                const id = parseInt(el.getAttribute('data-id'));
+                const notif = notifications.find(n => n.id === id);
+                if (notif) {
+                    notif.read = true;
+                    updateNotificationUI();
+                    
+                    // Handle different notification types
+                    const type = el.getAttribute('data-type');
+                    const related = el.getAttribute('data-related');
+                    
+                    if (type === 'friend_request' && related) {
+                        // Open friends modal to requests tab
+                        document.getElementById('requestsTabBtn').click();
+                        document.getElementById('friendsModal').classList.remove('hidden');
+                    } else if (related && (type === 'mutual_match' || type === 'friend_event')) {
+                        // Jump to that date
+                        if (currentCalendar) {
+                            currentCalendar.gotoDate(related);
+                        }
+                    }
+                }
+                document.getElementById('notificationPanel').style.display = 'none';
+            });
+        });
+    }
+    
+    function formatTimeAgo(dateStr) {
+        const date = new Date(dateStr);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'just now';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+        return `${Math.floor(seconds / 86400)}d ago`;
+    }
+    
+    function loadNotifications() {
+        if (currentUser) {
+            const saved = localStorage.getItem(`notifications_${currentUser.email}`);
+            if (saved) {
+                try {
+                    notifications = JSON.parse(saved);
+                    updateNotificationUI();
+                } catch (e) {
+                    console.error("Error loading notifications:", e);
+                    notifications = [];
+                }
+            }
+        }
+    }
+
+    async function loadFriendsAndRequests() {
+        if (!currentUser) return;
+        
+        const userRef = doc(db, "users", currentUser.email);
+        const userDoc = await getDoc(userRef);
+        
+        if (userDoc.exists()) {
+            const oldFriends = [...myFriends];
+            const oldPending = [...pendingRequests];
+            
+            myFriends = userDoc.data().friends || [];
+            pendingRequests = userDoc.data().pendingRequests || [];
+            sentRequests = userDoc.data().sentRequests || [];
+            
+            checkForNewFriendRequests(oldPending, pendingRequests);
+            checkForFriendAcceptances(oldFriends, myFriends);
+        } else {
+            myFriends = [];
+            pendingRequests = [];
+            sentRequests = [];
+            await setDoc(userRef, { 
+                email: currentUser.email,
+                friends: [],
+                pendingRequests: [],
+                sentRequests: []
+            });
+        }
+        
+        updateFriendsUI();
+        updateRequestsUI();
+        updateRequestBadge();
+        refreshCalendarData();
+        updateStatsBar();
+    }
+    
+    function updateRequestBadge() {
+        const badge = document.getElementById('requestBadge');
+        if (pendingRequests.length > 0) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+    
+    async function sendFriendRequest(toEmail) {
+        if (toEmail === currentUser.email) {
+            alert("You can't send a request to yourself!");
+            return false;
+        }
+        
+        if (myFriends.includes(toEmail)) {
+            alert("Already friends!");
+            return false;
+        }
+        
+        if (sentRequests.includes(toEmail)) {
+            alert("Request already sent!");
+            return false;
+        }
+        
+        const userExists = allSchedules.some(s => s.email === toEmail);
+        if (!userExists) {
+            alert(`User ${toEmail} hasn't logged in yet. Ask them to sign in first!`);
+            return false;
+        }
+        
+        try {
+            const senderRef = doc(db, "users", currentUser.email);
+            const newSentRequests = [...sentRequests, toEmail];
+            await setDoc(senderRef, { 
+                email: currentUser.email,
+                friends: myFriends,
+                pendingRequests: pendingRequests,
+                sentRequests: newSentRequests
+            });
+            
+            const receiverRef = doc(db, "users", toEmail);
+            const receiverDoc = await getDoc(receiverRef);
+            let receiverPending = [];
+            let receiverFriends = [];
+            if (receiverDoc.exists()) {
+                receiverPending = receiverDoc.data().pendingRequests || [];
+                receiverFriends = receiverDoc.data().friends || [];
+            }
+            
+            if (!receiverPending.includes(currentUser.email)) {
+                receiverPending.push(currentUser.email);
+            }
+            
+            await setDoc(receiverRef, {
+                email: toEmail,
+                friends: receiverFriends,
+                pendingRequests: receiverPending,
+                sentRequests: receiverDoc.data()?.sentRequests || []
+            });
+            
+            alert(`Friend request sent to ${toEmail.split('@')[0]}!`);
+            await loadFriendsAndRequests();
+            return true;
+        } catch (error) {
+            console.error("Error sending friend request:", error);
+            alert("Failed to send friend request. Please try again.");
+            return false;
+        }
+    }
+    
+    async function acceptRequest(fromEmail) {
+        try {
+            const newFriends = [...myFriends, fromEmail];
+            const newPending = pendingRequests.filter(e => e !== fromEmail);
+            
+            const myRef = doc(db, "users", currentUser.email);
+            await setDoc(myRef, {
+                email: currentUser.email,
+                friends: newFriends,
+                pendingRequests: newPending,
+                sentRequests: sentRequests
+            });
+            
+            const senderRef = doc(db, "users", fromEmail);
+            const senderDoc = await getDoc(senderRef);
+            let senderFriends = senderDoc.data()?.friends || [];
+            let senderSent = senderDoc.data()?.sentRequests || [];
+            
+            if (!senderFriends.includes(currentUser.email)) {
+                senderFriends.push(currentUser.email);
+            }
+            senderSent = senderSent.filter(e => e !== currentUser.email);
+            
+            await setDoc(senderRef, {
+                email: fromEmail,
+                friends: senderFriends,
+                pendingRequests: senderDoc.data()?.pendingRequests || [],
+                sentRequests: senderSent
+            });
+            
+            addNotification("👋 New Friend!", `You are now friends with ${fromEmail.split('@')[0]}`, "friend_accepted", fromEmail);
+            alert(`You are now friends with ${fromEmail.split('@')[0]}!`);
+            await loadFriendsAndRequests();
+            refreshCalendarData();
+        } catch (error) {
+            console.error("Error accepting request:", error);
+            alert("Failed to accept friend request. Please try again.");
+        }
+    }
+    
+    async function declineRequest(fromEmail) {
+        const newPending = pendingRequests.filter(e => e !== fromEmail);
+        const myRef = doc(db, "users", currentUser.email);
+        await setDoc(myRef, {
+            email: currentUser.email,
+            friends: myFriends,
+            pendingRequests: newPending,
+            sentRequests: sentRequests
+        });
+        await loadFriendsAndRequests();
+    }
+    
+    async function removeFriend(friendEmail) {
+        if (!confirm(`Remove ${friendEmail.split('@')[0]} from your friends?`)) return;
+        
+        try {
+            const newFriends = myFriends.filter(e => e !== friendEmail);
+            const myRef = doc(db, "users", currentUser.email);
+            await setDoc(myRef, {
+                email: currentUser.email,
+                friends: newFriends,
+                pendingRequests: pendingRequests,
+                sentRequests: sentRequests
+            });
+            
+            const friendRef = doc(db, "users", friendEmail);
+            const friendDoc = await getDoc(friendRef);
+            if (friendDoc.exists()) {
+                let friendFriends = friendDoc.data().friends || [];
+                friendFriends = friendFriends.filter(e => e !== currentUser.email);
+                await setDoc(friendRef, {
+                    email: friendEmail,
+                    friends: friendFriends,
+                    pendingRequests: friendDoc.data().pendingRequests || [],
+                    sentRequests: friendDoc.data().sentRequests || []
+                });
+            }
+            
+            alert(`Removed ${friendEmail.split('@')[0]} from your friends`);
+            await loadFriendsAndRequests();
+            refreshCalendarData();
+        } catch (error) {
+            console.error("Error removing friend:", error);
+            alert("Failed to remove friend. Please try again.");
+        }
+    }
+    
+    async function searchUser(email) {
+        const userExists = allSchedules.some(s => s.email === email);
+        const resultDiv = document.getElementById('searchResult');
+        
+        if (!userExists) {
+            resultDiv.innerHTML = `<div class="text-center text-red-500 text-sm p-2">❌ User not found. They need to sign in first.</div>`;
+            resultDiv.classList.remove('hidden');
+            return;
+        }
+        
+        const isFriend = myFriends.includes(email);
+        const requestSent = sentRequests.includes(email);
+        const isMe = email === currentUser.email;
+        
+        let actionButton = '';
+        if (isMe) {
+            actionButton = '<div class="text-gray-400 text-sm">👤 This is you</div>';
+        } else if (isFriend) {
+            actionButton = '<div class="text-green-600 text-sm">✓ Already friends</div>';
+        } else if (requestSent) {
+            actionButton = '<div class="text-yellow-600 text-sm">⏳ Request sent</div>';
+        } else {
+            actionButton = `<button onclick="window.sendFriendRequest('${email}')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded text-sm">Send Request</button>`;
+        }
+        
+        resultDiv.innerHTML = `
+            <div class="flex justify-between items-center">
+                <div><span class="font-medium">${email.split('@')[0]}</span><span class="text-xs text-gray-400 ml-2">${email}</span></div>
+                ${actionButton}
+            </div>
+        `;
+        resultDiv.classList.remove('hidden');
+    }
+    
+    function updateFriendsUI() {
+        const container = document.getElementById('friendsList');
+        if (!container) return;
+        
+        if (myFriends.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 text-sm p-4">No friends yet. Send some requests!</div>';
+            return;
+        }
+        
+        container.innerHTML = myFriends.map(email => `
+            <div class="friend-list-item flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                <div><span class="text-sm font-medium">${email.split('@')[0]}</span><span class="text-xs text-gray-400 ml-2">${email}</span></div>
+                <button onclick="window.removeFriend('${email}')" class="text-red-500 hover:text-red-700 text-sm font-bold px-2 py-1 rounded">Remove</button>
+            </div>
+        `).join('');
+    }
+    
+    function updateRequestsUI() {
+        const container = document.getElementById('requestsList');
+        if (!container) return;
+        
+        if (pendingRequests.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 text-sm p-4">No pending requests</div>';
+            return;
+        }
+        
+        container.innerHTML = pendingRequests.map(email => `
+            <div class="request-list-item flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
+                <div><span class="text-sm font-medium">${email.split('@')[0]}</span><span class="text-xs text-gray-500 ml-2">${email}</span></div>
+                <div class="flex gap-2">
+                    <button onclick="window.acceptRequest('${email}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs">Accept</button>
+                    <button onclick="window.declineRequest('${email}')" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-1 rounded text-xs">Decline</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    window.sendFriendRequest = sendFriendRequest;
+    window.acceptRequest = acceptRequest;
+    window.declineRequest = declineRequest;
+    window.removeFriend = removeFriend;
+    
+    async function loadAllUsers() {
+        const usersList = [];
+        const schedulesSnap = await getDocs(collection(db, "schedules"));
+        schedulesSnap.forEach(doc => {
+            usersList.push({ email: doc.id });
+        });
+        return usersList;
+    }
+    
+    async function deleteUser(email) {
+        if (!confirm(`Delete user ${email} and all their data? This cannot be undone.`)) return;
+        
+        try {
+            await deleteDoc(doc(db, "schedules", email));
+            const userRef = doc(db, "users", email);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                await deleteDoc(userRef);
+            }
+            alert(`User ${email} deleted`);
+            
+            const adminModal = document.getElementById('adminModal');
+            if (!adminModal.classList.contains('hidden')) {
+                const users = await loadAllUsers();
+                const container = document.getElementById('allUsersList');
+                if (users.length === 0) {
+                    container.innerHTML = '<div class="text-center text-gray-400 text-sm p-4">No users found</div>';
+                } else {
+                    container.innerHTML = users.map(u => `
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                            <span class="text-sm">${u.email}</span>
+                            <button onclick="window.deleteUser('${u.email}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button>
+                        </div>
+                    `).join('');
+                }
+            }
+            if (currentUser && currentUser.email === email) await signOut(auth);
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            alert("Failed to delete user. Please try again.");
+        }
+    }
+    
+    async function exportAllData() {
+        const data = {
+            users: allSchedules.map(s => ({ email: s.email, blocks: s.blocks })),
+            events: allEvents,
+            friendRelationships: []
+        };
+        
+        const usersSnap = await getDocs(collection(db, "users"));
+        usersSnap.forEach(doc => {
+            data.friendRelationships.push({
+                user: doc.id,
+                friends: doc.data().friends || []
+            });
+        });
+        
+        const dataStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `calendar_export_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        alert("Data exported successfully!");
+    }
+    
+    window.deleteUser = deleteUser;
+
+    // ─── Auth ─────────────────────────────────────────────────────────────────
+
+    document.getElementById('googleLoginBtn').onclick = async () => {
+        try { 
+            const result = await signInWithPopup(auth, provider);
+            if ("Notification" in window && Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+        }
+        catch (e) { alert("Login failed: " + e.message); }
+    };
+    document.getElementById('logoutBtn').onclick = () => signOut(auth);
+
+    document.getElementById('adminViewToggle')?.addEventListener('change', (e) => {
+        adminViewEnabled = e.target.checked;
+        const adminStatusBadge = document.getElementById('adminStatusBadge');
+        const adminStats = document.getElementById('adminStats');
+        
+        if (adminViewEnabled) {
+            adminStatusBadge?.classList.remove('hidden');
+            adminStats?.classList.remove('hidden');
+            document.getElementById('calendar')?.classList.add('admin-view-active');
+            addNotification("🔍 Admin View", "You are now seeing ALL users' availability and events", "admin");
+        } else {
+            adminStatusBadge?.classList.add('hidden');
+            adminStats?.classList.add('hidden');
+            document.getElementById('calendar')?.classList.remove('admin-view-active');
+        }
+        refreshCalendarData();
+        updateStatsBar();
+    });
+
+    document.getElementById('friendsBtn').onclick = () => {
+        updateFriendsUI();
+        updateRequestsUI();
+        document.getElementById('friendsModal').classList.remove('hidden');
+    };
+    document.getElementById('closeFriendsModal').onclick = () => {
+        document.getElementById('friendsModal').classList.add('hidden');
+    };
+    
+    document.getElementById('friendsTabBtn').onclick = () => {
+        document.getElementById('friendsTab').classList.remove('hidden');
+        document.getElementById('requestsTab').classList.add('hidden');
+        document.getElementById('searchTab').classList.add('hidden');
+        document.getElementById('friendsTabBtn').classList.add('tab-active');
+        document.getElementById('requestsTabBtn').classList.remove('tab-active');
+        document.getElementById('searchTabBtn').classList.remove('tab-active');
+    };
+    document.getElementById('requestsTabBtn').onclick = () => {
+        document.getElementById('friendsTab').classList.add('hidden');
+        document.getElementById('requestsTab').classList.remove('hidden');
+        document.getElementById('searchTab').classList.add('hidden');
+        document.getElementById('friendsTabBtn').classList.remove('tab-active');
+        document.getElementById('requestsTabBtn').classList.add('tab-active');
+        document.getElementById('searchTabBtn').classList.remove('tab-active');
+        updateRequestsUI();
+    };
+    document.getElementById('searchTabBtn').onclick = () => {
+        document.getElementById('friendsTab').classList.add('hidden');
+        document.getElementById('requestsTab').classList.add('hidden');
+        document.getElementById('searchTab').classList.remove('hidden');
+        document.getElementById('friendsTabBtn').classList.remove('tab-active');
+        document.getElementById('requestsTabBtn').classList.remove('tab-active');
+        document.getElementById('searchTabBtn').classList.add('tab-active');
+    };
+    
+    document.getElementById('searchUserBtn').onclick = () => {
+        const email = document.getElementById('searchEmailInput').value.trim();
+        if (email) {
+            searchUser(email);
+        } else {
+            alert("Enter an email address");
+        }
+    };
+    
+    document.getElementById('adminBtn').onclick = async () => {
+        const users = await loadAllUsers();
+        const container = document.getElementById('allUsersList');
+        if (users.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 text-sm p-4">No users found</div>';
+        } else {
+            container.innerHTML = users.map(u => `
+                <div class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                    <span class="text-sm">${u.email}</span>
+                    <button onclick="window.deleteUser('${u.email}')" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">Delete</button>
+                </div>
+            `).join('');
+        }
+        document.getElementById('adminModal').classList.remove('hidden');
+    };
+    document.getElementById('closeAdminModal').onclick = () => {
+        document.getElementById('adminModal').classList.add('hidden');
+    };
+    document.getElementById('closeAdminModalBtn').onclick = () => {
+        document.getElementById('adminModal').classList.add('hidden');
+    };
+    document.getElementById('exportAllDataBtn').onclick = () => {
+        exportAllData();
+    };
+
+    document.getElementById('notificationBell').onclick = (e) => {
+        e.stopPropagation();
+        const panel = document.getElementById('notificationPanel');
+        const isVisible = panel.style.display === 'block';
+        
+        if (!isVisible) {
+            markAllAsRead();
+        }
+        
+        panel.style.display = isVisible ? 'none' : 'block';
+    };
+    
+    document.getElementById('clearNotificationsBtn').onclick = () => {
+        notifications = [];
+        if (currentUser) {
+            localStorage.setItem(`notifications_${currentUser.email}`, JSON.stringify(notifications));
+        }
+        updateNotificationUI();
+        document.getElementById('notificationPanel').style.display = 'none';
+    };
+    
+    document.addEventListener('click', (e) => {
+        const panel = document.getElementById('notificationPanel');
+        const bell = document.getElementById('notificationBell');
+        if (panel && !panel.contains(e.target) && !bell.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
+
+    // Keep track of previous state for notification comparisons
+    let previousEvents = [];
+    let previousSchedules = [];
+    let previousFriends = [];
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainScreen').classList.remove('hidden');
+            document.getElementById('userEmail').innerText = user.email;
+            
+            const adminEmails = ['luara0511f@gmail.com'];
+            isAdmin = adminEmails.includes(user.email);
+            
+            if (isAdmin) {
+                document.getElementById('adminBtn').classList.remove('hidden');
+                document.getElementById('adminToggleContainer').classList.remove('hidden');
+                document.getElementById('adminViewToggle').checked = false;
+                adminViewEnabled = false;
+            }
+            
+            loadNotifications();
+            await loadFriendsAndRequests();
+
+            const schedRef = doc(db, "schedules", user.email);
+            const schedSnap = await getDoc(schedRef);
+            if (!schedSnap.exists()) await setDoc(schedRef, { email: user.email, blocks: [] });
+
+            const eventsUnsubscribe = onSnapshot(collection(db, "events"), snap => {
+                const newEvents = [];
+                snap.forEach(d => newEvents.push({ id: d.id, ...d.data() }));
+                
+                // Check for new events
+                if (previousEvents.length > 0) {
+                    checkForNewEvents(previousEvents, newEvents);
+                }
+                
+                allEvents = newEvents;
+                previousEvents = [...newEvents];
+                
+                if (currentCalendar) {
+                    refreshCalendarData();
+                } else {
+                    initCalendar();
+                }
+            });
+
+            const schedulesUnsubscribe = onSnapshot(collection(db, "schedules"), async snap => {
+                const newSchedules = [];
+                snap.forEach(d => newSchedules.push(d.data()));
+                
+                // Check for new matches
+                if (previousSchedules.length > 0) {
+                    checkForNewMatches(previousSchedules, newSchedules);
+                }
+                
+                allSchedules = newSchedules;
+                previousSchedules = [...newSchedules];
+                
+                if (currentCalendar) {
+                    refreshCalendarData();
+                }
+                updateStatsBar();
+            });
+            
+            const userUnsubscribe = onSnapshot(doc(db, "users", user.email), async (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const oldFriends = [...myFriends];
+                    
+                    myFriends = data.friends || [];
+                    pendingRequests = data.pendingRequests || [];
+                    sentRequests = data.sentRequests || [];
+                    
+                    checkForFriendAcceptances(oldFriends, myFriends);
+                    
+                    updateFriendsUI();
+                    updateRequestsUI();
+                    updateRequestBadge();
+                    refreshCalendarData();
+                    updateStatsBar();
+                }
+            });
+            
+            window.cleanupListeners = () => {
+                eventsUnsubscribe();
+                schedulesUnsubscribe();
+                userUnsubscribe();
+            };
+            
+        } else {
+            if (window.cleanupListeners) window.cleanupListeners();
+            currentUser = null;
+            isAdmin = false;
+            adminViewEnabled = false;
+            previousEvents = [];
+            previousSchedules = [];
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainScreen').classList.add('hidden');
+            if (currentCalendar) { currentCalendar.destroy(); currentCalendar = null; }
+        }
+    });
+
+    // ─── Calendar Functions ───────────────────────────────────────────────────
+
+    function getMyBlocksForDate(date) {
+        const mine = allSchedules.find(s => s.email === currentUser?.email);
+        return (mine?.blocks || []).filter(b => b.date === date);
+    }
+
+    function getMyStatusForDate(date) {
+        const blocks = getMyBlocksForDate(date);
+        if (blocks.some(b => b.type === 'busy')) return 'busy';
+        if (blocks.some(b => b.type === 'free')) return 'free';
+        return null;
+    }
+
+    function buildScheduleBgEvents() {
+        const bgEvents = [];
+        const relevantSchedules = getRelevantSchedules();
+        const myFreeDates = new Set();
+        
+        const mySchedule = relevantSchedules.find(s => s.email === currentUser?.email);
+        (mySchedule?.blocks || []).filter(b => b.type === 'free').forEach(b => {
+            myFreeDates.add(b.date);
+        });
+        
+        for (const schedule of relevantSchedules) {
+            const isCurrentUser = schedule.email === currentUser?.email;
+            const blocks = schedule.blocks || [];
+            
+            for (const b of blocks) {
+                if (isCurrentUser) {
+                    bgEvents.push({
+                        start: `${b.date}T${b.from}`,
+                        end: `${b.date}T${b.to}`,
+                        display: 'background',
+                        color: b.type === 'busy' ? '#ef4444' : '#3b82f6',
+                        overlap: true
+                    });
+                } else {
+                    if (b.type === 'free' && myFreeDates.has(b.date)) {
+                        bgEvents.push({
+                            start: `${b.date}T${b.from}`,
+                            end: `${b.date}T${b.to}`,
+                            display: 'background',
+                            color: '#eab308',
+                            overlap: true,
+                            title: `${schedule.email.split('@')[0]} is also free`
+                        });
+                    }
+                }
+            }
+        }
+        
+        return bgEvents;
+    }
+
+    function applyDayHighlights() {
+        const colors = calculateDayColors();
+        const days = document.querySelectorAll('.fc-daygrid-day');
+        
+        days.forEach(day => {
+            const d = day.getAttribute('data-date');
+            if (!d) return;
+            
+            day.classList.remove('you-free-highlight', 'you-busy-highlight', 'mutual-free-highlight', 'everyone-free-highlight');
+            
+            if (colors.everyoneFree[d]) {
+                day.classList.add('everyone-free-highlight');
+                day.title = "🟢 Everyone is free! Perfect day to hang out!";
+            } else if (colors.mutualFree[d] && colors.mutualFree[d].length > 0) {
+                day.classList.add('mutual-free-highlight');
+                const friends = colors.mutualFree[d].join(', ');
+                day.title = `🟡 ${friends} ${colors.mutualFree[d].length === 1 ? 'is' : 'are'} also free today`;
+            } else if (colors.youFree[d]) {
+                day.classList.add('you-free-highlight');
+                day.title = "🔵 You're free today (private)";
+            } else if (colors.youBusy[d]) {
+                day.classList.add('you-busy-highlight');
+                day.title = "🔴 You're busy today";
+            }
+        });
+    }
+
+    function evToFcEvent(ev) {
+        const relevantEvents = getRelevantEvents();
+        const isRelevant = relevantEvents.some(e => e.id === ev.id);
+        if (!isRelevant) return null;
+        
+        const isOwn = ev.createdBy === currentUser?.email;
+        let title = `${ev.mood || '📌'} ${ev.title}`;
+        if (isAdmin && adminViewEnabled && !isOwn) {
+            title = `[${ev.createdBy.split('@')[0]}] ${title}`;
+        }
+        
+        return {
+            id: ev.id,
+            title: title,
+            start: `${ev.date}T${ev.time || '12:00'}`,
+            className: 'bg-white text-gray-800 border-gray-300',
+            extendedProps: { 
+                mood: ev.mood, 
+                createdBy: ev.createdBy, 
+                rsvps: ev.rsvps || {}
+            }
+        };
+    }
+
+    function handleDayClick(dateStr) {
+        if (!isEventClick) {
+            openDayModal(dateStr);
+        }
+        isEventClick = false;
+    }
+
+    function initCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        
+        currentCalendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            scrollTime: '08:00:00',
+            events: [
+                ...allEvents.map(evToFcEvent).filter(ev => ev !== null),
+                ...buildScheduleBgEvents()
+            ],
+            eventClick: (info) => {
+                if (info.event.display === 'background') {
+                    if (isAdmin && adminViewEnabled && info.event.title) {
+                        alert(info.event.title);
+                    }
+                    return;
+                }
+                isEventClick = true;
+                info.jsEvent.stopPropagation();
+                openEventModal(info.event);
+                return false;
+            },
+            dateClick: (info) => {
+                handleDayClick(info.dateStr);
+            },
+            datesSet: () => {
+                setTimeout(applyDayHighlights, 100);
+            },
+            dayCellDidMount: (info) => {
+                const d = info.date.toISOString().split('T')[0];
+                const colors = calculateDayColors();
+                
+                info.el.classList.remove('you-free-highlight', 'you-busy-highlight', 'mutual-free-highlight', 'everyone-free-highlight');
+                
+                if (colors.everyoneFree[d]) {
+                    info.el.classList.add('everyone-free-highlight');
+                } else if (colors.mutualFree[d] && colors.mutualFree[d].length > 0) {
+                    info.el.classList.add('mutual-free-highlight');
+                } else if (colors.youFree[d]) {
+                    info.el.classList.add('you-free-highlight');
+                } else if (colors.youBusy[d]) {
+                    info.el.classList.add('you-busy-highlight');
+                }
+                
+                info.el.style.cursor = 'pointer';
+                info.el.onclick = (e) => {
+                    if (e.target.closest('.fc-event')) {
+                        return;
+                    }
+                    handleDayClick(d);
+                };
+            }
+        });
+        currentCalendar.render();
+        setTimeout(applyDayHighlights, 200);
+    }
+
+    function refreshCalendarData() {
+        if (!currentCalendar) return;
+        currentCalendar.removeAllEvents();
+        currentCalendar.addEventSource([
+            ...allEvents.map(evToFcEvent).filter(ev => ev !== null),
+            ...buildScheduleBgEvents()
+        ]);
+        setTimeout(applyDayHighlights, 100);
+    }
+
+    // ─── Day Modal Functions ─────────────────────────────────────────────────
+
+    async function openDayModal(dateStr) {
+        currentSelectedDay = dateStr;
+        const label = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-IE', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+        document.getElementById('dayModalTitle').innerText = label;
+        document.getElementById('dayModalEventTime').value = "19:00";
+        document.getElementById('dayModalEventTitle').value = "";
+        document.getElementById('dayModalSubtitle').innerHTML = '';
+
+        document.getElementById('timePicker').classList.add('hidden');
+        document.getElementById('timePickerArrow').innerText = '▶';
+
+        renderMutualFree(dateStr);
+        renderAdminView(dateStr);
+        renderMyBlocksForDay(dateStr);
+        updateAvailabilityStatusDisplay(dateStr);
+        renderEventsOnDay(dateStr);
+
+        document.getElementById('dayModal').classList.remove('hidden');
+    }
+    
+    function renderAdminView(dateStr) {
+        const section = document.getElementById('adminViewSection');
+        const list = document.getElementById('allUsersFreeList');
+        
+        if (!isAdmin || !adminViewEnabled) {
+            section.classList.add('hidden');
+            return;
+        }
+        
+        const allUsersStatus = [];
+        for (const schedule of allSchedules) {
+            const freeBlocks = (schedule.blocks || []).filter(b => b.date === dateStr && b.type === 'free');
+            const busyBlocks = (schedule.blocks || []).filter(b => b.date === dateStr && b.type === 'busy');
+            const name = schedule.email.split('@')[0];
+            
+            if (freeBlocks.length > 0) {
+                const times = freeBlocks.map(b => `${b.from}–${b.to}`).join(', ');
+                allUsersStatus.push(`<div class="flex justify-between text-sm"><span class="text-green-600">🟢 ${name}</span><span class="text-gray-500 text-xs">${times}</span></div>`);
+            } else if (busyBlocks.length > 0) {
+                allUsersStatus.push(`<div class="text-sm text-red-600">🔴 ${name} — busy</div>`);
+            } else {
+                allUsersStatus.push(`<div class="text-sm text-gray-400">⚪ ${name} — not set</div>`);
+            }
+        }
+        
+        list.innerHTML = allUsersStatus.join('');
+        section.classList.remove('hidden');
+    }
+
+    function renderMutualFree(dateStr) {
+        const colors = calculateDayColors();
+        const section = document.getElementById('mutualFreeSection');
+        const list = document.getElementById('mutualFreeList');
+
+        if (!colors.mutualFree[dateStr] || colors.mutualFree[dateStr].length === 0 || (isAdmin && adminViewEnabled)) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        list.innerHTML = colors.mutualFree[dateStr].map(name => `
+            <div class="flex items-center gap-2 text-sm">
+                <span class="text-yellow-600">🟡</span>
+                <span class="font-medium">${name}</span>
+                <span class="text-gray-500">is also free today</span>
+            </div>
+        `).join('');
+        
+        section.classList.remove('hidden');
+    }
+
+    function renderMyBlocksForDay(dateStr) {
+        const blocks = getMyBlocksForDate(dateStr);
+        const div = document.getElementById('myBlocksForDay');
+        if (blocks.length === 0) {
+            div.innerHTML = '<div class="text-xs text-gray-400 italic">No blocks set for this day</div>';
+            return;
+        }
+
+        div.innerHTML = blocks.map((b, i) => `
+            <div class="flex justify-between items-center text-xs px-2 py-1 rounded ${b.type === 'free' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'}">
+                <span>${b.type === 'free' ? '🔵' : '🔴'} ${b.from} – ${b.to}</span>
+                <button onclick="window.deleteMyBlock('${dateStr}', ${i})" class="ml-2 font-bold hover:opacity-70">✕</button>
+            </div>
+        `).join('');
+    }
+
+    window.deleteMyBlock = async (dateStr, displayIndex) => {
+        const ref = doc(db, "schedules", currentUser.email);
+        const snap = await getDoc(ref);
+        let blocks = snap.data()?.blocks || [];
+        let count = 0;
+        const globalIndex = blocks.findIndex((b) => {
+            if (b.date === dateStr) {
+                if (count === displayIndex) return true;
+                count++;
+            }
+            return false;
+        });
+        if (globalIndex !== -1) blocks.splice(globalIndex, 1);
+        await setDoc(ref, { email: currentUser.email, blocks });
+        renderMyBlocksForDay(dateStr);
+        updateAvailabilityStatusDisplay(dateStr);
+        refreshCalendarData();
+    };
+
+    function updateAvailabilityStatusDisplay(dateStr) {
+        const status = getMyStatusForDate(dateStr);
+        const div = document.getElementById('currentAvailabilityStatus');
+        if (status === 'busy') div.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs">🔴 You are busy today</span>`;
+        else if (status === 'free') div.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs">🔵 You are free today (private)</span>`;
+        else div.innerHTML = `<span class="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs">⚪ No availability set</span>`;
+    }
+
+    function renderEventsOnDay(dateStr) {
+        const relevantEvents = getRelevantEvents();
+        const eventsHere = relevantEvents.filter(ev => ev.date === dateStr);
+        const listDiv = document.getElementById('eventsOnDay');
+        
+        if (eventsHere.length === 0) {
+            listDiv.innerHTML = `<p class="text-sm text-gray-400 text-center py-3">No events yet — add one below!</p>`;
+            return;
+        }
+        
+        listDiv.innerHTML = eventsHere.map(ev => {
+            let displayName = ev.createdBy?.split('@')[0];
+            if (isAdmin && adminViewEnabled && ev.createdBy !== currentUser?.email) {
+                displayName = `[${displayName}]`;
+            }
+            return `
+            <div class="day-modal-event-item bg-gray-50 rounded-lg p-3 cursor-pointer border" data-event-id="${ev.id}">
+                <div class="flex justify-between items-start">
+                    <span class="font-semibold text-sm">${ev.mood || '📌'} ${ev.title} ${ev.time ? `<span class="text-xs text-gray-400 font-normal ml-1">at ${ev.time}</span>` : ''}</span>
+                    <span class="text-xs text-gray-400">by ${displayName}</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">${getRsvpSummary(ev.rsvps || {})}</p>
+            </div>
+        `}).join('');
+
+        listDiv.querySelectorAll('.day-modal-event-item').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const ev = relevantEvents.find(e => e.id === el.getAttribute('data-event-id'));
+                if (ev) {
+                    document.getElementById('dayModal').classList.add('hidden');
+                    openEventModalFromData(ev);
+                }
+            });
+        });
+    }
+
+    // ─── Availability buttons ─────────────────────────────────────────────────
+
+    async function saveBlock(dateStr, from, to, type) {
+        const ref = doc(db, "schedules", currentUser.email);
+        const snap = await getDoc(ref);
+        const blocks = snap.exists() ? (snap.data().blocks || []) : [];
+        blocks.push({ date: dateStr, from, to, type });
+        await setDoc(ref, { email: currentUser.email, blocks });
+        renderMyBlocksForDay(dateStr);
+        updateAvailabilityStatusDisplay(dateStr);
+        refreshCalendarData();
+    }
+
+    async function clearAllBlocksForDay(dateStr) {
+        const ref = doc(db, "schedules", currentUser.email);
+        const snap = await getDoc(ref);
+        const blocks = (snap.data()?.blocks || []).filter(b => b.date !== dateStr);
+        await setDoc(ref, { email: currentUser.email, blocks });
+        renderMyBlocksForDay(dateStr);
+        updateAvailabilityStatusDisplay(dateStr);
+        refreshCalendarData();
+    }
+
+    document.getElementById('setFreeBtn').onclick = async () => {
+        if (currentSelectedDay) {
+            await saveBlock(currentSelectedDay, "00:00", "23:59", "free");
+            alert("✅ Marked as FREE all day! (Private until friends are also free)");
+        }
+    };
+    document.getElementById('setBusyBtn').onclick = async () => {
+        if (currentSelectedDay) {
+            await saveBlock(currentSelectedDay, "00:00", "23:59", "busy");
+            alert("🔴 Marked as BUSY all day!");
+        }
+    };
+    document.getElementById('clearAvailabilityBtn').onclick = async () => {
+        if (currentSelectedDay && confirm("Clear all availability for this day?")) {
+            await clearAllBlocksForDay(currentSelectedDay);
+            alert("Availability cleared!");
+        }
+    };
+
+    document.getElementById('toggleTimePicker').onclick = () => {
+        const tp = document.getElementById('timePicker');
+        const arrow = document.getElementById('timePickerArrow');
+        const hidden = tp.classList.toggle('hidden');
+        arrow.innerText = hidden ? '▶' : '▼';
+    };
+
+    document.getElementById('addBlockBtn').onclick = async () => {
+        const from = document.getElementById('blockFrom').value;
+        const to = document.getElementById('blockTo').value;
+        const type = document.getElementById('blockType').value;
+        if (!from || !to) { alert("Set both times"); return; }
+        if (from >= to) { alert("End must be after start"); return; }
+        await saveBlock(currentSelectedDay, from, to, type);
+        document.getElementById('timePicker').classList.add('hidden');
+        document.getElementById('timePickerArrow').innerText = '▶';
+        alert(`✅ Added ${type === 'free' ? 'FREE' : 'BUSY'} block: ${from}–${to}`);
+    };
+
+    document.getElementById('closeDayModal').onclick = () => {
+        document.getElementById('dayModal').classList.add('hidden');
+    };
+
+    document.getElementById('addEventFromDayBtn').onclick = async () => {
+        const title = document.getElementById('dayModalEventTitle').value.trim();
+        if (!title) { alert("Please enter a title"); return; }
+        await addDoc(collection(db, "events"), {
+            title,
+            date: currentSelectedDay,
+            time: document.getElementById('dayModalEventTime').value,
+            mood: document.getElementById('dayModalEventMood').value,
+            createdBy: currentUser.email,
+            createdAt: new Date().toISOString(),
+            rsvps: {}
+        });
+        document.getElementById('dayModalEventTitle').value = "";
+        document.getElementById('dayModal').classList.add('hidden');
+        alert("Event added! 🎉");
+    };
+
+    // ─── Event RSVP Modal ─────────────────────────────────────────────────────
+
+    function buildRsvpHtml(rsvps, createdBy) {
+        const going = Object.entries(rsvps).filter(([,v]) => v === 'going').map(([k]) => k.split('@')[0]);
+        const maybe = Object.entries(rsvps).filter(([,v]) => v === 'maybe').map(([k]) => k.split('@')[0]);
+        const no = Object.entries(rsvps).filter(([,v]) => v === 'no').map(([k]) => k.split('@')[0]);
+        let creator = createdBy?.split('@')[0];
+        if (isAdmin && adminViewEnabled && createdBy !== currentUser?.email) {
+            creator = `[${creator}]`;
+        }
+        return `<strong>Created by:</strong> ${creator}<br><br>
+            ✅ Going: ${going.join(', ') || 'None'}<br>
+            🤔 Maybe: ${maybe.join(', ') || 'None'}<br>
+            ❌ Can't: ${no.join(', ') || 'None'}`;
+    }
+
+    function openEventModal(fcEvent) {
+        currentEventId = fcEvent.id;
+        const p = fcEvent.extendedProps;
+        document.getElementById('modalTitle').innerText = fcEvent.title;
+        document.getElementById('modalDetails').innerHTML = buildRsvpHtml(p.rsvps, p.createdBy);
+        document.getElementById('eventModal').classList.remove('hidden');
+    }
+
+    function openEventModalFromData(ev) {
+        currentEventId = ev.id;
+        document.getElementById('modalTitle').innerText = `${ev.mood || '📌'} ${ev.title}`;
+        document.getElementById('modalDetails').innerHTML = buildRsvpHtml(ev.rsvps || {}, ev.createdBy);
+        document.getElementById('eventModal').classList.remove('hidden');
+    }
+
+    async function submitRsvp(status) {
+        if (!currentEventId) return;
+        const ref = doc(db, "events", currentEventId);
+        const snap = await getDoc(ref);
+        const rsvps = snap.data()?.rsvps || {};
+        rsvps[currentUser.email] = status;
+        await updateDoc(ref, { rsvps });
+        document.getElementById('eventModal').classList.add('hidden');
+    }
+
+    document.getElementById('rsvpYes').onclick = () => submitRsvp('going');
+    document.getElementById('rsvpMaybe').onclick = () => submitRsvp('maybe');
+    document.getElementById('rsvpNo').onclick = () => submitRsvp('no');
+    document.getElementById('closeModal').onclick = () => document.getElementById('eventModal').classList.add('hidden');
+
+    function getRsvpSummary(rsvps) {
+        const n = Object.values(rsvps).filter(v => v === 'going').length;
+        return n === 0 ? 'No RSVPs yet' : `✅ ${n} going`;
+    }
+
+    function updateStatsBar() {
+        const colors = calculateDayColors();
+        const everyoneFreeCount = Object.keys(colors.everyoneFree).length;
+        document.getElementById('freeDaysCount').innerText = everyoneFreeCount;
+        
+        if (isAdmin && adminViewEnabled) {
+            document.getElementById('memberCount').innerHTML = `${allSchedules.length} total users`;
+        } else {
+            document.getElementById('memberCount').innerText = myFriends.length;
+        }
+        document.getElementById('statsBar').classList.remove('hidden');
+    }
+
+</script>
+</body>
+</html>

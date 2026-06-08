@@ -37,8 +37,9 @@ let isEventClick = false;
 let isAdmin = false;
 let adminViewEnabled = false;
 let notifUnsubscribe = null;
+let onesignalInitialized = false;
 
-// ==================== PUSH NOTIFICATION UI ====================
+// ==================== ONE SIGNAL PUSH NOTIFICATIONS ====================
 
 let pushBannerTimeout = null;
 
@@ -116,26 +117,109 @@ function permanentlyDismissPushBanner() {
     showToastMessage("You can enable notifications later in profile settings", "info");
 }
 
-// Enable push notifications
-async function enablePushNotifications() {
-    if (!currentUser) return;
+// Initialize OneSignal
+async function initOneSignal() {
+    if (!window.OneSignalDeferred || onesignalInitialized) return;
     
     try {
-        const permission = await Notification.requestPermission();
+        const OneSignal = await window.OneSignalDeferred[0];
         
-        if (permission === 'granted') {
+        // Get user's OneSignal subscription ID
+        const subscriptionId = await OneSignal.getExternalUserId();
+        
+        if (subscriptionId) {
+            // Save to Firestore
             const userRef = doc(db, "users", currentUser.email);
-            await setDoc(userRef, { pushEnabled: true }, { merge: true });
+            await setDoc(userRef, { 
+                onesignalId: subscriptionId,
+                pushEnabled: true 
+            }, { merge: true });
             
             updatePushStatusUI(true);
             hidePushBanner();
-            showToastMessage("Notifications enabled! 🎉", "success");
-        } else {
-            showToastMessage("You denied notification permissions", "info");
+            onesignalInitialized = true;
         }
     } catch (error) {
-        console.error("Push notification error:", error);
+        console.error("OneSignal init error:", error);
+    }
+}
+
+// Enable push notifications (called from button)
+async function enablePushNotifications() {
+    if (!window.OneSignalDeferred) {
+        showToastMessage("Please wait, notifications are loading...", "info");
+        return;
+    }
+    
+    try {
+        const OneSignal = await window.OneSignalDeferred[0];
+        const permission = await OneSignal.showSlidedown();
+        
+        if (permission) {
+            const subscriptionId = await OneSignal.getExternalUserId();
+            
+            if (subscriptionId) {
+                const userRef = doc(db, "users", currentUser.email);
+                await setDoc(userRef, { 
+                    onesignalId: subscriptionId,
+                    pushEnabled: true 
+                }, { merge: true });
+            }
+            
+            updatePushStatusUI(true);
+            hidePushBanner();
+            onesignalInitialized = true;
+            showToastMessage("Notifications enabled! 🎉", "success");
+        } else {
+            showToastMessage("You declined notifications", "info");
+        }
+    } catch (error) {
+        console.error("Error enabling OneSignal:", error);
         showToastMessage("Could not enable notifications", "error");
+    }
+}
+
+// Send push notification via OneSignal
+async function sendPushNotification(toEmail, title, message) {
+    if (toEmail === currentUser?.email) return;
+    
+    try {
+        const userRef = doc(db, "users", toEmail);
+        const userDoc = await getDoc(userRef);
+        const onesignalId = userDoc.data()?.onesignalId;
+        
+        if (!onesignalId) {
+            console.log("User hasn't enabled push notifications:", toEmail);
+            return;
+        }
+        
+        // Send via OneSignal API
+        const response = await fetch('https://onesignal.com/api/v1/notifications', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 's3usxs5efe4jutvbvma6na4eh' // Replace with your REST API Key
+            },
+            body: JSON.stringify({
+                app_id: 'b16fe9f6-3356-4364-8622-9c337d474242', // Replace with your App ID
+                include_external_user_ids: [onesignalId],
+                headings: { en: title },
+                contents: { en: message },
+                web_buttons: [
+                    {
+                        id: "open-calendar",
+                        text: "Open Calendar",
+                        url: window.location.href
+                    }
+                ]
+            })
+        });
+        
+        const result = await response.json();
+        console.log("Push notification sent:", result);
+        
+    } catch (error) {
+        console.error("Failed to send push:", error);
     }
 }
 
@@ -225,11 +309,15 @@ async function updateDisplayName(email, newDisplayName) {
 async function createNotification(toEmail, title, message, type) {
     if (toEmail === currentUser?.email) return;
     
+    // Send in-app notification
     await addDoc(collection(db, "notifications", toEmail, "items"), {
         title, message, type,
         read: false,
         createdAt: serverTimestamp()
     });
+    
+    // Send web push notification via OneSignal
+    await sendPushNotification(toEmail, title, message);
 }
 
 function subscribeToMyNotifications() {
@@ -311,6 +399,7 @@ function getRelevantEvents() {
         return false;
     });
 }
+
 async function loadFriendsAndRequests() {
     if (!currentUser) return;
     const snap = await getDoc(doc(db, "users", currentUser.email));
@@ -1481,7 +1570,7 @@ function setupEventListeners() {
         disablePushBtn.addEventListener('click', async () => {
             if (confirm("Disable notifications?")) {
                 const userRef = doc(db, "users", currentUser.email);
-                await updateDoc(userRef, { pushEnabled: false });
+                await updateDoc(userRef, { pushEnabled: false, onesignalId: "" });
                 updatePushStatusUI(false);
                 showToastMessage("Notifications disabled", "info");
             }
@@ -1540,14 +1629,11 @@ onAuthStateChanged(auth, async (user) => {
         const adminToggleContainer = document.getElementById('adminToggleContainer');
         
         if (isAdmin) {
-            // Show admin elements for admin users
             if (adminBtn) adminBtn.classList.remove('hidden');
             if (adminToggleContainer) adminToggleContainer.classList.remove('hidden');
         } else {
-            // Hide admin elements for regular users
             if (adminBtn) adminBtn.classList.add('hidden');
             if (adminToggleContainer) adminToggleContainer.classList.add('hidden');
-            // Also make sure adminViewEnabled is false
             adminViewEnabled = false;
             const adminToggleCheckbox = document.getElementById('adminViewToggle');
             if (adminToggleCheckbox) adminToggleCheckbox.checked = false;
@@ -1637,11 +1723,16 @@ onAuthStateChanged(auth, async (user) => {
         updateStatsBar();
         setupEventListeners();
         
+        // Check push notification status
         const userDoc = await getDoc(doc(db, "users", user.email));
         const pushEnabled = userDoc.data()?.pushEnabled;
         
         if (pushEnabled) {
             updatePushStatusUI(true);
+            // Initialize OneSignal if enabled
+            setTimeout(() => {
+                initOneSignal();
+            }, 1000);
         } else {
             updatePushStatusUI(false);
             const bannerDismissed = localStorage.getItem('pushBannerDismissed');

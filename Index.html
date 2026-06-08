@@ -8,8 +8,24 @@
     <!-- External CSS files -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
-    <!-- Firebase Messaging for Web Push -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js"></script>
+    
+    <!-- OneSignal SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    window.OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+            appId: "b16fe9f6-3356-4364-8622-9c337d474242", // Get from OneSignal dashboard
+            safari_web_id: "YOUR_SAFARI_WEB_ID",
+            notifyButton: {
+                enable: true,
+                position: 'bottom-left',
+                theme: 'default',
+                size: 'medium',
+            },
+        });
+    });
+</script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>

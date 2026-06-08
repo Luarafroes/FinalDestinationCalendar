@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Squad Calendar</title>
+    
+    <!-- External CSS files -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <!-- Firebase Messaging for Web Push -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+</head>
+<body data-theme="ocean">
+<div id="app" class="max-w-7xl mx-auto">
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="rounded-2xl shadow-xl p-8 text-center" style="background:var(--card)">
+        <div class="mb-6"><span class="text-6xl">🗓️</span></div>
+        <h1 class="text-3xl font-bold mb-2" style="color:var(--tp)">Squad Calendar</h1>
+        <p class="text-sm mb-8" style="color:var(--ts)">Find mutual free time with friends</p>
+        <button id="googleLoginBtn" class="font-semibold py-3 px-8 rounded-xl transition shadow-md w-full sm:w-auto" style="background:var(--bp);color:white">🚀 Sign in with Google</button>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="mainScreen" class="hidden">
+        <div class="rounded-2xl shadow-xl overflow-hidden" style="background:var(--card)">
+
+            <!-- Header -->
+<div class="text-white p-3 sm:p-4" style="background:linear-gradient(135deg,var(--hg-s),var(--hg-e))">
+    <div class="flex justify-between items-center flex-wrap gap-2">
+        <div class="flex items-center gap-3">
+            <button id="profileBtn" class="focus:outline-none cursor-pointer transition hover:opacity-80">
+                <div id="avatarContainer" class="relative">
+                    <img id="myAvatar" src="" alt="Avatar" class="avatar hidden">
+                    <div id="avatarFallback" class="avatar avatar-fallback hidden items-center justify-center" style="background:var(--bp);color:white;font-weight:bold;font-size:18px">?</div>
+                </div>
+            </button>
+            <div class="text-left">
+                <h1 class="text-xl sm:text-2xl font-bold">🗓️ Squad Calendar</h1>
+                <p id="userDisplayName" class="text-sm sm:text-base opacity-90 font-medium truncate max-w-[180px] sm:max-w-none"></p>
+                <p id="adminStatusBadge" class="text-xs font-bold mt-1 hidden">🔧 ADMIN MODE</p>
+            </div>
+        </div>
+        <div class="flex gap-2 sm:gap-3 items-center flex-wrap">
+            <div id="adminToggleContainer" class="hidden items-center gap-2 bg-white/20 px-3 py-1.5 rounded-lg">
+                <span class="text-xs font-medium">👁️ Admin</span>
+                <label class="admin-toggle"><input type="checkbox" id="adminViewToggle"><span class="admin-toggle-slider"></span></label>
+            </div>
+            <div id="friendsBtnContainer" class="relative">
+                <button id="friendsBtn" class="bg-white/20 hover:bg-white/30 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition">👥 Friends</button>
+                <span id="requestBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">!</span>
+            </div>
+            <button id="adminBtn" class="bg-red-500/30 hover:bg-red-500/50 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition hidden">🛠️ Admin</button>
+            <button id="themeBtn" class="bg-white/20 hover:bg-white/30 px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition">🎨 Theme</button>
+            <div id="notificationBell" class="notification-bell relative">
+                <span class="text-xl sm:text-2xl">🔔</span>
+                <span id="notificationBadge" class="notification-badge hidden">0</span>
+            </div>
+            <div id="notificationPanel" class="notification-panel">
+                <div class="notification-header">📢 Notifications</div>
+                <div id="notificationList"></div>
+                <button id="clearNotificationsBtn" class="w-full text-center text-xs py-2 hover:bg-black/5 transition border-t" style="color:var(--ts)">Clear all</button>
+            </div>
+            <button id="logoutBtn" class="bg-white/20 hover:bg-white/30 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition">Sign out</button>
+        </div>
+    </div>
+    <div class="mt-2 sm:mt-3 pt-2 flex gap-3 sm:gap-5 text-xs text-white/90 flex-wrap border-t border-white/20">
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span> Everyone free</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-blue-400 inline-block"></span> You're free</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span> Friends also free</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span> You're busy</span>
+        <span class="opacity-60">👆 Click any day</span>
+    </div>
+</div>
+
+<!-- Push Notification Permission Banner (Appears at top, not a modal) -->
+<div id="pushBanner" class="hidden fixed top-20 right-4 z-50 max-w-sm rounded-lg shadow-lg p-4 animate-slide-in" style="background:var(--card); border-left: 4px solid var(--bp); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);">
+    <div class="flex items-start gap-3">
+        <div class="text-2xl">🔔</div>
+        <div class="flex-1">
+            <h4 class="font-semibold text-sm mb-1" style="color:var(--tp)">Stay Updated!</h4>
+            <p class="text-xs mb-2" style="color:var(--ts)">Get notifications for friend requests, events, and RSVPs - even when you're not on the site.</p>
+            <div class="flex gap-2 mt-2">
+                <button id="enablePushFromBanner" class="text-white px-3 py-1 rounded text-xs font-medium transition" style="background:var(--bp)">✅ Enable</button>
+                <button id="dismissPushBanner" class="px-3 py-1 rounded text-xs font-medium transition border" style="border-color:var(--bc); color:var(--ts)">Not now</button>
+            </div>
+        </div>
+        <button id="closePushBanner" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
+    </div>
+</div>
+
+<style>
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+</style>
+
+            <!-- Calendar -->
+            <div id="calendar" class="p-2 sm:p-4" style="min-height:500px"></div>
+
+            <!-- Stats Bar -->
+            <div id="statsBar" class="hidden px-3 sm:px-4 pb-3 pt-2 text-xs sm:text-sm border-t" style="color:var(--ts);background:var(--card)">
+                <div class="flex gap-4 sm:gap-6 flex-wrap">
+                    <span>🌟 <span id="freeDaysCount">0</span> days everyone is free</span>
+                    <span>👥 <span id="memberCount">0</span> friends</span>
+                    <span id="adminStats" class="hidden text-orange-600">🔍 Admin: Seeing ALL users</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+<div id="profileModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="rounded-xl max-w-md w-full p-5 sm:p-6" style="background:var(--card)">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg sm:text-xl font-bold" style="color:var(--tp)">👤 My Profile</h3>
+            <button id="closeProfileModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+        </div>
+        
+        <!-- Profile Picture -->
+        <div class="flex justify-center mb-4">
+            <div id="profileAvatarContainer" class="relative cursor-pointer group">
+                <img id="profileAvatar" src="" alt="Profile" class="w-24 h-24 rounded-full object-cover border-4" style="border-color:var(--bp)">
+                <div id="avatarEditOverlay" class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                    <span class="text-white text-xs font-semibold">Change Photo</span>
+                </div>
+                <input type="file" id="profilePhotoUpload" accept="image/*" class="hidden">
+            </div>
+        </div>
+        
+        <!-- Display Name (Editable) -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1" style="color:var(--tp)">Display Name</label>
+            <input type="text" id="profileDisplayName" class="w-full px-3 py-2 border rounded-lg text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+            <p class="text-xs mt-1" style="color:var(--ts)">This name will be visible to everyone on public events</p>
+        </div>
+        
+        <!-- Email (Read-only) -->
+        <div class="mb-4">
+            <label class="block text-sm font-medium mb-1" style="color:var(--tp)">Email</label>
+            <input type="email" id="profileEmail" readonly class="w-full px-3 py-2 border rounded-lg text-sm bg-gray-100" style="background:rgba(0,0,0,0.05);border-color:var(--bc);color:var(--ts)">
+            <p class="text-xs mt-1" style="color:var(--ts)">Your email is private and only visible to you and your friends</p>
+        </div>
+        
+        <!-- Save Button -->
+        <button id="saveProfileBtn" class="w-full text-white py-2 rounded-lg font-semibold text-sm transition hover:opacity-90 mb-2" style="background:var(--bp)">💾 Save Changes</button>
+        
+        <!-- Close Button -->
+        <button id="closeProfileModalBtn" class="w-full py-2 rounded-lg font-semibold text-sm transition" style="background:var(--bc);color:var(--tp)">Close</button>
+    </div>
+</div>
+
+    <!-- Theme Modal -->
+    <div id="themeModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="rounded-xl max-w-sm w-full p-6" style="background:var(--card)">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold" style="color:var(--tp)">🎨 Choose Theme</h3>
+                <button id="closeThemeModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="theme-option-card" data-theme="cherry"><div class="w-full h-20 rounded-lg mb-2" style="background:linear-gradient(135deg,#ec4899,#db2777)"></div><p class="text-sm font-medium text-center" style="color:var(--tp)">🌸 Cherry Blossom</p></div>
+                <div class="theme-option-card" data-theme="cottoncandy"><div class="w-full h-20 rounded-lg mb-2" style="background:linear-gradient(135deg,#d946ef,#c026d3)"></div><p class="text-sm font-medium text-center" style="color:var(--tp)">🍰 Cotton Candy</p></div>
+                <div class="theme-option-card" data-theme="ocean"><div class="w-full h-20 rounded-lg mb-2" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)"></div><p class="text-sm font-medium text-center" style="color:var(--tp)">🌊 Ocean Breeze</p></div>
+                <div class="theme-option-card" data-theme="midnight"><div class="w-full h-20 rounded-lg mb-2" style="background:linear-gradient(135deg,#4c1d95,#5b21b6)"></div><p class="text-sm font-medium text-center" style="color:var(--tp)">🌙 Midnight</p></div>
+                <div class="theme-option-card" data-theme="gothic"><div class="w-full h-20 rounded-lg mb-2" style="background:linear-gradient(135deg,#7c2d12,#991b1b)"></div><p class="text-sm font-medium text-center" style="color:var(--tp)">🦇 Gothic</p></div>
+                <div class="theme-option-card" data-theme="darkstorm"><div class="w-full h-20 rounded-lg mb-2" style="background:linear-gradient(135deg,#1e3a5f,#0f2b4d)"></div><p class="text-sm font-medium text-center" style="color:var(--tp)">⚡ Dark Storm</p></div>
+            </div>
+            <p class="text-xs text-center opacity-60" style="color:var(--ts)">Theme saves automatically!</p>
+        </div>
+    </div>
+
+    <!-- Friends Modal -->
+    <div id="friendsModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="rounded-xl max-w-md w-full p-5 sm:p-6 max-h-[85vh] overflow-y-auto" style="background:var(--card)">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg sm:text-xl font-bold" style="color:var(--tp)">👥 Friends</h3>
+                    <p class="text-xs sm:text-sm" style="color:var(--ts)">Connect with friends to see their availability</p>
+                </div>
+                <button id="closeFriendsModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="flex border-b mb-4" style="border-color:var(--bc)">
+                <button id="friendsTabBtn" class="tab-active flex-1 py-2 text-xs sm:text-sm font-medium transition">My Friends</button>
+                <button id="requestsTabBtn" class="flex-1 py-2 text-xs sm:text-sm font-medium transition">Requests</button>
+                <button id="searchTabBtn" class="flex-1 py-2 text-xs sm:text-sm font-medium transition">Find</button>
+            </div>
+            <div id="friendsTab">
+                <div id="friendsList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+            </div>
+            <div id="requestsTab" class="hidden">
+                <div id="requestsList" class="space-y-2 max-h-64 overflow-y-auto"></div>
+            </div>
+            <div id="searchTab" class="hidden">
+                <div class="mb-3">
+                    <label class="block text-xs sm:text-sm font-medium mb-1" style="color:var(--tp)">Find by email</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="searchEmailInput" placeholder="Search by name or email..." class="flex-1 px-3 py-2 border rounded-lg text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                        <button id="searchUserBtn" class="text-white px-4 py-2 rounded-lg text-sm font-semibold transition" style="background:var(--bp)">Search</button>
+                    </div>
+                </div>
+                <div id="searchResult" class="mt-3 p-3 rounded-lg hidden" style="background:rgba(0,0,0,0.05)"></div>
+                <p class="text-xs mt-3" style="color:var(--ts)">💡 Users must have logged in at least once</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="rounded-xl max-w-md w-full p-5 sm:p-6" style="background:var(--card)">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-lg sm:text-xl font-bold" style="color:var(--tp)">🛠️ Admin Panel</h3>
+                <button id="closeAdminModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            <div class="mb-4">
+                <h4 class="font-semibold mb-2 text-sm" style="color:var(--tp)">All registered users</h4>
+                <div id="allUsersList" class="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-2" style="border-color:var(--bc)"></div>
+            </div>
+            <button id="exportAllDataBtn" class="w-full text-white py-2 rounded-lg text-sm font-semibold transition mb-2" style="background:#10b981">📥 Export All Data (JSON)</button>
+            <button id="closeAdminModalBtn" class="w-full py-2 rounded-lg font-semibold transition" style="background:var(--bc);color:var(--tp)">Close</button>
+        </div>
+    </div>
+
+    <!-- Day Modal -->
+    <div id="dayModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="rounded-xl max-w-lg w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto" style="background:var(--card)">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 id="dayModalTitle" class="text-lg sm:text-xl font-bold" style="color:var(--tp)"></h3>
+                    <p id="dayModalSubtitle" class="text-xs sm:text-sm mt-1" style="color:var(--ts)"></p>
+                </div>
+                <button id="closeDayModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            
+            <!-- Who's free section -->
+            <div id="mutualFreeSection" class="hidden mb-4 p-3 rounded-lg border" style="background:rgba(234,179,8,0.1);border-color:#eab308">
+                <h4 class="font-semibold mb-2 text-sm" style="color:#ca8a04">👥 Friends also free today</h4>
+                <div id="mutualFreeList" class="space-y-2"></div>
+            </div>
+            
+            <!-- Who hasn't set availability -->
+            <div id="missingAvailabilitySection" class="hidden mb-4 p-3 rounded-lg border" style="background:rgba(239,68,68,0.07);border-color:#fca5a5">
+                <h4 class="font-semibold mb-2 text-sm text-red-500">⚠️ Haven't set availability yet</h4>
+                <div id="missingAvailabilityList" class="space-y-1"></div>
+            </div>
+            
+            <!-- Your availability -->
+            <div class="mb-5 p-4 rounded-lg border" style="background:rgba(59,130,246,0.05);border-color:var(--bc)">
+                <h4 class="font-semibold mb-2 text-sm" style="color:var(--tp)">🎯 Your Availability</h4>
+                <div id="currentAvailabilityStatus" class="mb-3 text-xs sm:text-sm"></div>
+                <div id="myBlocksForDay" class="mb-3 space-y-1"></div>
+                <div class="flex gap-2 mb-3">
+                    <button id="setFreeBtn" class="flex-1 text-white py-2 rounded-lg font-semibold text-sm transition" style="background:#3b82f6">🔵 Free all day</button>
+                    <button id="setBusyBtn" class="flex-1 text-white py-2 rounded-lg font-semibold text-sm transition" style="background:#ef4444">🔴 Busy all day</button>
+                    <button id="clearAvailabilityBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-2 rounded-lg font-semibold text-sm">Clear</button>
+                </div>
+                <button id="toggleTimePicker" class="w-full text-sm font-medium py-2 flex items-center justify-center gap-1 border rounded-lg transition" style="color:var(--bp);border-color:var(--bc)">
+                    <span id="timePickerArrow">▶</span> Add specific time block
+                </button>
+                <div id="timePicker" class="hidden mt-3 p-3 border rounded-lg" style="background:var(--card);border-color:var(--bc)">
+                    <div class="flex gap-2 items-end flex-wrap">
+                        <div class="flex-1 min-w-[80px]">
+                            <label class="block text-xs mb-1" style="color:var(--ts)">From</label>
+                            <input type="time" id="blockFrom" value="09:00" class="w-full px-2 py-2 border rounded text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                        </div>
+                        <div class="flex-1 min-w-[80px]">
+                            <label class="block text-xs mb-1" style="color:var(--ts)">To</label>
+                            <input type="time" id="blockTo" value="17:00" class="w-full px-2 py-2 border rounded text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1" style="color:var(--ts)">Type</label>
+                            <select id="blockType" class="px-2 py-2 border rounded text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                                <option value="free">🟢 Free</option>
+                                <option value="busy">🔴 Busy</option>
+                            </select>
+                        </div>
+                        <button id="addBlockBtn" class="text-white px-3 py-2 rounded text-sm font-semibold" style="background:var(--bp)">Add</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Events -->
+            <div class="mb-5">
+                <h4 class="font-semibold mb-2 text-sm" style="color:var(--tp)">📅 Events</h4>
+                <div id="eventsOnDay" class="space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+            
+            <!-- Add event -->
+            <div class="border-t pt-4" style="border-color:var(--bc)">
+                <h4 class="font-semibold mb-3 text-sm" style="color:var(--tp)">➕ Add Event</h4>
+                <div class="space-y-2">
+                    <input type="text" id="dayModalEventTitle" placeholder="Movie night, hike, dinner..." class="w-full px-3 py-2 border rounded-lg text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                    <div class="flex gap-2">
+                        <input type="time" id="dayModalEventTime" class="flex-1 px-3 py-2 border rounded-lg text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                        <select id="dayModalEventMood" class="flex-1 px-3 py-2 border rounded-lg text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                            <option value="🎉">🎉 Party</option>
+                            <option value="🍿">🍿 Chill</option>
+                            <option value="🏋️">🏋️ Active</option>
+                            <option value="☕">☕ Coffee</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg border" style="background:rgba(59,130,246,0.05);border-color:var(--bc)">
+                        <div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="eventVisibility" class="w-4 h-4 rounded" style="accent-color:var(--bp)">
+                                <span class="text-sm font-medium" style="color:var(--tp)">🌍 Make this event public</span>
+                            </label>
+                            <p class="text-xs mt-1" style="color:var(--ts)">Public events are visible to all app users, not just friends</p>
+                        </div>
+                        <div id="visibilityIcon" class="text-xl">🔒</div>
+                    </div>
+                    <button id="addEventFromDayBtn" class="w-full text-white py-2 rounded-lg font-semibold text-sm transition hover:opacity-90" style="background:var(--bp)">+ Add Event</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event RSVP Modal -->
+    <div id="eventModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="rounded-xl max-w-md w-full p-5 sm:p-6" style="background:var(--card)">
+            <h3 id="modalTitle" class="text-lg sm:text-xl font-bold mb-3" style="color:var(--tp)"></h3>
+            <div id="modalDetails" class="mb-4 text-sm" style="color:var(--ts)"></div>
+            
+            <!-- Edit Section (only visible to event creator or admin) -->
+            <div id="editEventSection" class="hidden mb-4 p-3 rounded-lg border" style="background:rgba(59,130,246,0.05);border-color:var(--bc)">
+                <h4 class="font-semibold mb-2 text-sm" style="color:var(--tp)">✏️ Edit Event</h4>
+                <input type="text" id="editEventTitle" placeholder="Event title" class="w-full px-3 py-2 border rounded-lg text-sm mb-2" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                <div class="flex gap-2 mb-2">
+                    <input type="time" id="editEventTime" class="flex-1 px-3 py-2 border rounded-lg text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                    <select id="editEventMood" class="flex-1 px-3 py-2 border rounded-lg text-sm" style="background:var(--card);border-color:var(--bc);color:var(--tp)">
+                        <option value="🎉">🎉 Party</option>
+                        <option value="🍿">🍿 Chill</option>
+                        <option value="🏋️">🏋️ Active</option>
+                        <option value="☕">☕ Coffee</option>
+                    </select>
+                </div>
+                <div class="flex items-center justify-between mb-3">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="editEventVisibility" class="w-4 h-4 rounded" style="accent-color:var(--bp)">
+                        <span class="text-sm" style="color:var(--tp)">🌍 Make public</span>
+                    </label>
+                    <span id="editVisibilityLabel" class="text-xs px-2 py-1 rounded-full" style="background:var(--bc);color:var(--ts)">Private</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="saveEventEditBtn" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-semibold text-sm">💾 Save Changes</button>
+                    <button id="cancelEventEditBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg font-semibold text-sm">Cancel</button>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mb-4">
+                <button id="rsvpYes" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-semibold">✅ Going</button>
+                <button id="rsvpMaybe" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-lg font-semibold">🤔 Maybe</button>
+                <button id="rsvpNo" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-semibold">❌ Can't</button>
+            </div>
+            
+            <button id="toggleEditBtn" class="w-full py-2 rounded-lg font-semibold text-sm mb-2 transition hidden" style="background:var(--bp);color:white">✏️ Edit Event</button>
+            <button id="closeModal" class="w-full py-2 rounded-lg font-semibold" style="background:var(--bc);color:var(--tp)">Close</button>
+        </div>
+    </div>
+
+    <!-- Push Notifications Status (shows after enabled) -->
+<div id="pushStatusContainer" class="hidden mb-4 p-3 rounded-lg border" style="background:rgba(34,197,94,0.1);border-color:#22c55e">
+    <div class="flex items-center justify-between">
+        <div>
+            <span class="text-sm font-medium" style="color:var(--tp)">✅ Notifications Enabled</span>
+            <p class="text-xs mt-1" style="color:var(--ts)">You'll receive browser notifications</p>
+        </div>
+        <button id="disablePushBtn" class="text-red-500 hover:text-red-600 text-xs font-medium">Disable</button>
+    </div>
+</div>
+</div>
+
+<!-- JavaScript -->
+<script type="module" src="Calendar.js"></script>
+</body>
+</html>

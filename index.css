@@ -1,0 +1,550 @@
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 100vh;
+}
+
+/* Themes */
+[data-theme="cherry"] {
+    --bg-s: #fdf2f8;
+    --bg-e: #fce7f3;
+    --hg-s: #ec4899;
+    --hg-e: #db2777;
+    --card: #fff0f7;
+    --tp: #4a044e;
+    --ts: #831843;
+    --bc: #fbcfe8;
+    --bp: #ec4899;
+    --bph: #db2777;
+    --fc: #22c55e;
+    --bc2: #ef4444;
+    --mc: #fbbf24;
+    --ec: #16a34a;
+    --sticker: "🌸";
+    --so: 0.08;
+}
+
+[data-theme="cottoncandy"] {
+    --bg-s: #f5d0fe;
+    --bg-e: #fbcfe8;
+    --hg-s: #d946ef;
+    --hg-e: #c026d3;
+    --card: #fdf4ff;
+    --tp: #581c87;
+    --ts: #7e22ce;
+    --bc: #f0abfc;
+    --bp: #d946ef;
+    --bph: #c026d3;
+    --fc: #22c55e;
+    --bc2: #ef4444;
+    --mc: #fbbf24;
+    --ec: #16a34a;
+    --sticker: "🍰";
+    --so: 0.08;
+}
+
+[data-theme="ocean"] {
+    --bg-s: #e0f2fe;
+    --bg-e: #bae6fd;
+    --hg-s: #0ea5e9;
+    --hg-e: #0284c7;
+    --card: #f0f9ff;
+    --tp: #082f49;
+    --ts: #075985;
+    --bc: #bae6fd;
+    --bp: #0ea5e9;
+    --bph: #0284c7;
+    --fc: #22c55e;
+    --bc2: #ef4444;
+    --mc: #fbbf24;
+    --ec: #16a34a;
+    --sticker: "🌊";
+    --so: 0.08;
+}
+
+[data-theme="midnight"] {
+    --bg-s: #1e1b4b;
+    --bg-e: #2e1065;
+    --hg-s: #4c1d95;
+    --hg-e: #5b21b6;
+    --card: #2d2b55;
+    --tp: #f8fafc;
+    --ts: #cbd5e1;
+    --bc: #4c1d95;
+    --bp: #7c3aed;
+    --bph: #6d28d9;
+    --fc: #34d399;
+    --bc2: #f87171;
+    --mc: #fbbf24;
+    --ec: #10b981;
+    --sticker: "🌙";
+    --so: 0.12;
+}
+
+[data-theme="gothic"] {
+    --bg-s: #2d1b2e;
+    --bg-e: #1a1a2e;
+    --hg-s: #7c2d12;
+    --hg-e: #991b1b;
+    --card: #3b2a3d;
+    --tp: #ffffff;
+    --ts: #e5e7eb;
+    --bc: #7c2d12;
+    --bp: #dc2626;
+    --bph: #b91c1c;
+    --fc: #4ade80;
+    --bc2: #ef4444;
+    --mc: #fbbf24;
+    --ec: #22c55e;
+    --sticker: "🦇";
+    --so: 0.12;
+}
+
+[data-theme="darkstorm"] {
+    --bg-s: #0f0f23;
+    --bg-e: #1a1a3e;
+    --hg-s: #1e3a5f;
+    --hg-e: #0f2b4d;
+    --card: #1a1a2e;
+    --tp: #f8fafc;
+    --ts: #cbd5e1;
+    --bc: #1e293b;
+    --bp: #3b82f6;
+    --bph: #2563eb;
+    --fc: #4ade80;
+    --bc2: #ef4444;
+    --mc: #fbbf24;
+    --ec: #22c55e;
+    --sticker: "⚡";
+    --so: 0.10;
+}
+
+body {
+    background: linear-gradient(135deg, var(--bg-s), var(--bg-e));
+    position: relative;
+}
+
+body::before {
+    content: var(--sticker);
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 80px;
+    opacity: var(--so);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* FullCalendar Overrides */
+.fc, .fc-daygrid-day, .fc-col-header-cell, .fc-theme-standard td, .fc-theme-standard th,
+.bg-white, .bg-gray-50, .bg-gray-100 {
+    background-color: var(--card) !important;
+}
+
+.fc-daygrid-day-number, .fc-col-header-cell-cushion, .fc-toolbar-title,
+.text-gray-800, .text-gray-700, .text-gray-600, .text-gray-900,
+h1, h2, h3, h4, p, span, div:not(.fc-event) {
+    color: var(--tp) !important;
+}
+
+.text-gray-500, .text-gray-400 {
+    color: var(--ts) !important;
+}
+
+.border, .border-gray-200, .fc-border-color, .border-t, .border-b {
+    border-color: var(--bc) !important;
+}
+
+.bg-blue-600, .bg-blue-500 {
+    background-color: var(--bp) !important;
+}
+
+.bg-gradient-to-r {
+    background: linear-gradient(135deg, var(--hg-s), var(--hg-e)) !important;
+}
+
+/* Day Highlights */
+.fc-daygrid-day.everyone-free-highlight {
+    background: linear-gradient(135deg, var(--ec), #16a34a) !important;
+    border: 2px solid var(--ec) !important;
+    animation: pulse-green 2s infinite;
+}
+
+.fc-daygrid-day.you-free-highlight {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+    border: 2px solid #3b82f6 !important;
+}
+
+.fc-daygrid-day.mutual-free-highlight {
+    background: linear-gradient(135deg, var(--mc), #ca8a04) !important;
+    border: 2px solid var(--mc) !important;
+}
+
+.fc-daygrid-day.you-busy-highlight {
+    background: linear-gradient(135deg, var(--bc2), #dc2626) !important;
+    border: 2px solid var(--bc2) !important;
+}
+
+.fc-daygrid-day.everyone-free-highlight .fc-daygrid-day-number,
+.fc-daygrid-day.you-free-highlight .fc-daygrid-day-number,
+.fc-daygrid-day.mutual-free-highlight .fc-daygrid-day-number,
+.fc-daygrid-day.you-busy-highlight .fc-daygrid-day-number {
+    background: rgba(0, 0, 0, 0.2) !important;
+    color: white !important;
+    font-weight: bold !important;
+    border-radius: 50% !important;
+    width: 28px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.fc-daygrid-day-number {
+    font-weight: 600 !important;
+    z-index: 2 !important;
+    position: relative !important;
+}
+
+.fc-event {
+    cursor: pointer;
+    transition: transform 0.1s;
+    z-index: 10;
+    position: relative;
+}
+
+.fc-event:hover {
+    transform: scale(1.02);
+}
+
+.fc-daygrid-day {
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+}
+
+.fc-daygrid-event {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 20;
+}
+
+.fc-bg-event {
+    opacity: 0.45 !important;
+}
+
+.fc-button-primary {
+    background-color: var(--bp) !important;
+    border-color: var(--bp) !important;
+}
+
+.fc-button-primary:hover {
+    background-color: var(--bph) !important;
+}
+
+/* Animations */
+@keyframes pulse-green {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+}
+
+/* Avatar Styles */
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--bc);
+    flex-shrink: 0;
+}
+
+.avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.avatar-fallback {
+    background: var(--bp);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Notification Panel */
+.notification-bell {
+    position: relative;
+    cursor: pointer;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    padding: 0 4px;
+}
+
+.notification-panel {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    width: 320px;
+    max-height: 460px;
+    overflow-y: auto;
+    background: var(--card);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+    display: none;
+    border: 1px solid var(--bc);
+}
+
+.notification-header {
+    background: var(--hg-s) !important;
+    color: white !important;
+    padding: 12px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+    border-radius: 12px 12px 0 0 !important;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.notification-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--bc);
+    transition: background 0.2s;
+}
+
+.notification-item.unread {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.notification-item .notif-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--tp);
+}
+
+.notification-item .notif-msg {
+    font-size: 12px;
+    color: var(--ts);
+    margin-top: 2px;
+}
+
+.notification-item .notif-time {
+    font-size: 10px;
+    color: var(--ts);
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+/* Friends List */
+.friend-list-item, .request-list-item {
+    transition: all 0.2s;
+}
+
+.friend-list-item:hover, .request-list-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.tab-active {
+    border-bottom: 2px solid var(--bp);
+    color: var(--bp);
+}
+
+/* Theme Option Cards */
+.theme-option-card {
+    cursor: pointer;
+    border-radius: 12px;
+    padding: 8px;
+    transition: all 0.2s;
+}
+
+.theme-option-card:hover {
+    transform: scale(1.02);
+}
+
+/* Admin Toggle */
+.admin-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.admin-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.admin-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .3s;
+    border-radius: 24px;
+}
+
+.admin-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+
+input:checked + .admin-toggle-slider {
+    background-color: #f59e0b;
+}
+
+input:checked + .admin-toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    #dayModal, #eventModal, #friendsModal, #adminModal, #themeModal, #profileModal {
+        align-items: flex-end !important;
+    }
+    
+    #dayModal > div, #eventModal > div, #friendsModal > div, #adminModal > div, #themeModal > div, #profileModal > div {
+        border-radius: 20px 20px 0 0 !important;
+        max-height: 85vh !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .fc .fc-toolbar-title {
+        font-size: 1.2em !important;
+    }
+    
+    .fc .fc-button {
+        padding: 0.4em 0.8em !important;
+        font-size: 0.8em !important;
+    }
+    
+    button {
+        min-height: 44px;
+    }
+    
+    input, select {
+        font-size: 16px !important;
+    }
+}
+
+#avatarContainer {
+    width: 40px;
+    height: 40px;
+}
+
+#avatarContainer .avatar {
+    width: 40px;
+    height: 40px;
+}
+
+#avatarFallback {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Profile Photo Upload */
+#profileAvatarContainer {
+    cursor: pointer;
+}
+
+#avatarEditOverlay {
+    transition: opacity 0.2s ease;
+}
+
+#profilePhotoUpload {
+    display: none;
+}
+
+/* Free time overlay (blue) */
+.fc-daygrid-day.free-overlay::before {
+    background: linear-gradient(to bottom, #1d4ed8, #1d4ed8);
+    opacity: 0.7;
+}
+
+/* Busy time overlay (red) */
+.fc-daygrid-day.busy-overlay::before {
+    background: linear-gradient(to bottom, #dc2626, #dc2626);
+    opacity: 0.7;
+}
+
+/* Split day styling */
+.fc-daygrid-day[style*="linear-gradient"] .fc-daygrid-day-number {
+    background: rgba(0, 0, 0, 0.3) !important;
+    color: white !important;
+    border-radius: 50% !important;
+    z-index: 2;
+    position: relative;
+}
+
+/* Ensure text is readable on split backgrounds */
+.fc-daygrid-day[style*="linear-gradient"] {
+    position: relative;
+}
+
+.fc-daygrid-day[style*="linear-gradient"] .fc-daygrid-day-number {
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+}
+
+/* Ensure text is readable on gradient backgrounds */
+.fc-daygrid-day[style*="linear-gradient"] {
+    position: relative;
+}
+
+.fc-daygrid-day[style*="linear-gradient"] .fc-daygrid-day-number {
+    background: rgba(0, 0, 0, 0.4) !important;
+    color: white !important;
+    border-radius: 50% !important;
+    z-index: 2;
+    position: relative;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+}
+
+/* Ensure mutual free highlight works with gradients */
+.fc-daygrid-day.mutual-free-highlight {
+    background: linear-gradient(135deg, var(--mc), #ca8a04) !important;
+    border: 2px solid var(--mc) !important;
+}

@@ -193,15 +193,16 @@ async function sendPushNotification(toEmail, title, message) {
             return;
         }
         
-        // Send via OneSignal API
+        // Send via OneSignal API - YOU NEED TO GET YOUR REAL API KEY FROM ONESIGNAL DASHBOARD
+        // Go to OneSignal Dashboard > Settings > Keys & IDs > REST API Key
         const response = await fetch('https://onesignal.com/api/v1/notifications', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 's3usxs5efe4jutvbvma6na4eh' // Replace with your REST API Key
+                'Authorization': 'os_v2_app_wfx6t5rtkzbwjbrctqzx2r2ciit2xltmtjses5u2ko7nls5tlfn6d55abzitsihb5elio64ck75jcblpuoty5gmbpg7nuby4z7zkcfy' // REPLACE THIS!
             },
             body: JSON.stringify({
-                app_id: 'b16fe9f6-3356-4364-8622-9c337d474242', // Replace with your App ID
+                app_id: 'b16fe9f6-3356-4364-8622-9c337d474242',
                 include_external_user_ids: [onesignalId],
                 headings: { en: title },
                 contents: { en: message },
@@ -1576,14 +1577,6 @@ function setupEventListeners() {
             }
         });
     }
-    
-    document.getElementById('googleLoginBtn').onclick = async () => {
-        try {
-            await signInWithPopup(auth, provider);
-            if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
-        } catch (e) { alert("Login failed: " + e.message); }
-    };
-    document.getElementById('logoutBtn').onclick = () => signOut(auth);
 }
 
 // ==================== INITIALIZE THEME ====================
@@ -1761,5 +1754,33 @@ onAuthStateChanged(auth, async (user) => {
             currentCalendar.destroy();
             currentCalendar = null;
         }
+    }
+});
+
+// Add login button handler AFTER everything is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const loginBtn = document.getElementById('googleLoginBtn');
+    if (loginBtn) {
+        loginBtn.onclick = async () => {
+            console.log("Login button clicked");
+            try {
+                const result = await signInWithPopup(auth, provider);
+                console.log("Login successful:", result.user.email);
+                if ("Notification" in window && Notification.permission === "default") {
+                    Notification.requestPermission();
+                }
+            } catch (error) {
+                console.error("Login error:", error);
+                alert("Login failed: " + error.message);
+            }
+        };
+    }
+    
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.onclick = () => {
+            console.log("Logout clicked");
+            signOut(auth);
+        };
     }
 });

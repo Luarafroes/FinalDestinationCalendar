@@ -432,42 +432,7 @@ input:checked + .admin-toggle-slider:before {
     transform: translateX(26px);
 }
 
-/* Responsive */
-@media (max-width: 640px) {
-    #dayModal, #eventModal, #friendsModal, #adminModal, #themeModal, #profileModal {
-        align-items: flex-end !important;
-    }
-    
-    #dayModal > div, #eventModal > div, #friendsModal > div, #adminModal > div, #themeModal > div, #profileModal > div {
-        border-radius: 20px 20px 0 0 !important;
-        max-height: 85vh !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .fc .fc-toolbar {
-        flex-direction: column;
-        gap: 10px;
-    }
-    
-    .fc .fc-toolbar-title {
-        font-size: 1.2em !important;
-    }
-    
-    .fc .fc-button {
-        padding: 0.4em 0.8em !important;
-        font-size: 0.8em !important;
-    }
-    
-    button {
-        min-height: 44px;
-    }
-    
-    input, select {
-        font-size: 16px !important;
-    }
-}
-
+/* Avatar Container */
 #avatarContainer {
     width: 40px;
     height: 40px;
@@ -499,52 +464,194 @@ input:checked + .admin-toggle-slider:before {
     display: none;
 }
 
-/* Free time overlay (blue) */
-.fc-daygrid-day.free-overlay::before {
-    background: linear-gradient(to bottom, #1d4ed8, #1d4ed8);
-    opacity: 0.7;
+/* Mobile Bottom Sheet */
+#mobileBottomSheet {
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    transform: translateY(100%);
 }
 
-/* Busy time overlay (red) */
-.fc-daygrid-day.busy-overlay::before {
-    background: linear-gradient(to bottom, #dc2626, #dc2626);
-    opacity: 0.7;
+#mobileBottomSheet.show {
+    transform: translateY(0);
 }
 
-/* Split day styling */
-.fc-daygrid-day[style*="linear-gradient"] .fc-daygrid-day-number {
-    background: rgba(0, 0, 0, 0.3) !important;
-    color: white !important;
-    border-radius: 50% !important;
-    z-index: 2;
-    position: relative;
+#bottomSheetOverlay {
+    transition: opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
 }
 
-/* Ensure text is readable on split backgrounds */
-.fc-daygrid-day[style*="linear-gradient"] {
-    position: relative;
+#bottomSheetOverlay.show {
+    opacity: 1;
+    pointer-events: auto;
 }
 
-.fc-daygrid-day[style*="linear-gradient"] .fc-daygrid-day-number {
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+/* Mobile Menu Button */
+#mobileMenuBtn {
+    display: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    z-index: 10000;
 }
 
-/* Ensure text is readable on gradient backgrounds */
-.fc-daygrid-day[style*="linear-gradient"] {
-    position: relative;
+#mobileMenuBtn:hover {
+    transform: scale(1.05);
 }
 
-.fc-daygrid-day[style*="linear-gradient"] .fc-daygrid-day-number {
-    background: rgba(0, 0, 0, 0.4) !important;
-    color: white !important;
-    border-radius: 50% !important;
-    z-index: 2;
-    position: relative;
-    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+/* Show on mobile, hide desktop buttons */
+@media (max-width: 768px) {
+    #mobileMenuBtn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+    }
+    
+    /* Hide desktop buttons on mobile */
+    .hidden\\.md\\:flex {
+        display: none !important;
+    }
 }
 
-/* Ensure mutual free highlight works with gradients */
-.fc-daygrid-day.mutual-free-highlight {
-    background: linear-gradient(135deg, var(--mc), #ca8a04) !important;
-    border: 2px solid var(--mc) !important;
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .fc .fc-toolbar {
+        display: grid !important;
+        grid-template-columns: auto 1fr auto !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 8px 4px !important;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 1rem !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+    }
+
+    .fc .fc-prev-button,
+    .fc .fc-next-button {
+        padding: 6px 10px !important;
+        min-height: 36px !important;
+        min-width: 36px !important;
+    }
+
+    .fc .fc-button {
+        padding: 5px 10px !important;
+        font-size: 11px !important;
+        min-height: 32px !important;
+    }
+
+    .fc .fc-button-group {
+        display: flex !important;
+        gap: 4px !important;
+    }
+
+    .fc .fc-button-group .fc-button {
+        border-radius: 8px !important;
+    }
+
+    button { min-height: 44px; }
+    input, select { font-size: 16px !important; }
+    
+    .fc-daygrid-day-frame { min-height: 56px !important; }
+    .fc-daygrid-day-number { font-size: 13px !important; }
+    .fc-button { min-height: 40px !important; }
+    body { padding: 0 !important; }
+    #app > div:first-child { border-radius: 0 !important; }
+}
+
+@media (max-width: 640px) {
+    #dayModal, #eventModal, #friendsModal, #adminModal, #themeModal, #profileModal {
+        align-items: flex-end !important;
+        padding: 0;
+    }
+    
+    #dayModal > div, #eventModal > div, #friendsModal > div, 
+    #adminModal > div, #themeModal > div, #profileModal > div {
+        border-radius: 20px 20px 0 0 !important;
+        width: 100%;
+        max-width: 100%;
+        max-height: 85vh !important;
+        padding: 24px 16px;
+    }
+    
+    .notification-panel {
+        position: fixed;
+        left: 8px;
+        right: 8px;
+        bottom: 80px;
+        top: auto;
+        width: auto;
+        max-height: 60vh;
+    }
+}
+
+/* Input fix for mobile zoom */
+input, select, textarea { 
+    font-size: 16px !important; 
+}
+
+/* Hide bottom nav on desktop */
+#bottomNav {
+    display: none;
+}
+
+/* Login screen adjustments */
+#loginScreen {
+    min-height: auto !important;
+}
+
+/* Mobile Menu Button - With click feedback */
+#mobileMenuBtn {
+    display: none;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    z-index: 10000;
+}
+
+#mobileMenuBtn:active {
+    transform: scale(0.92);
+    opacity: 0.8;
+    transition: all 0.05s ease;
+}
+
+/* Visual feedback class for JavaScript click */
+#mobileMenuBtn.clicked {
+    transform: scale(0.9);
+    background: linear-gradient(135deg, #f43f5e, #be123c) !important;
+    transition: all 0.1s ease;
+}
+
+#mobileMenuBtn.clicked svg {
+    animation: spin 0.3s ease;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(180deg); }
+}
+
+/* Show on mobile, hide desktop buttons */
+@media (max-width: 768px) {
+    #mobileMenuBtn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+    }
+    
+    /* Hide desktop buttons on mobile */
+    .hidden\\.md\\:flex {
+        display: none !important;
+    }
 }

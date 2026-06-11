@@ -3,22 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Squad Calendar</title>
+    <title>Calendar</title>
     
     <!-- External CSS files -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
     
     <!-- OneSignal SDK -->
-   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-<script>
-  window.OneSignalDeferred = window.OneSignalDeferred || [];
-  OneSignalDeferred.push(async function(OneSignal) {
-    await OneSignal.init({
-      appId: "b16fe9f6-3356-4364-8622-9c337d474242",
-    });
-  });
-</script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+                appId: "b16fe9f6-3356-4364-8622-9c337d474242",
+            });
+        });
+    </script>
+    
+    <!-- Mobile Menu Functions - Defined immediately -->
+    <script>
+        window.openMobileMenu = function() {
+            console.log("openMobileMenu called");
+            const sheet = document.getElementById('mobileBottomSheet');
+            const overlay = document.getElementById('bottomSheetOverlay');
+            
+            if (sheet) {
+                sheet.classList.remove('hidden');
+                setTimeout(() => sheet.classList.add('show'), 10);
+            }
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('show'), 10);
+            }
+            document.body.style.overflow = 'hidden';
+        };
+        
+        window.closeMobileMenu = function() {
+            const sheet = document.getElementById('mobileBottomSheet');
+            const overlay = document.getElementById('bottomSheetOverlay');
+            
+            if (sheet) {
+                sheet.classList.remove('show');
+                setTimeout(() => sheet.classList.add('hidden'), 300);
+            }
+            if (overlay) {
+                overlay.classList.remove('show');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+            document.body.style.overflow = '';
+        };
+    </script>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -32,7 +66,7 @@
     <!-- Login Screen -->
     <div id="loginScreen" class="rounded-2xl shadow-xl p-8 text-center" style="background:var(--card)">
         <div class="mb-6"><span class="text-6xl">🗓️</span></div>
-        <h1 class="text-3xl font-bold mb-2" style="color:var(--tp)">Squad Calendar</h1>
+        <h1 class="text-3xl font-bold mb-2" style="color:var(--tp)">Calendar</h1>
         <p class="text-sm mb-8" style="color:var(--ts)">Find mutual free time with friends</p>
         <button id="googleLoginBtn" class="font-semibold py-3 px-8 rounded-xl transition shadow-md w-full sm:w-auto" style="background:var(--bp);color:white">🚀 Sign in with Google</button>
     </div>
@@ -52,12 +86,13 @@
                             </div>
                         </button>
                         <div class="text-left">
-                            <h1 class="text-xl sm:text-2xl font-bold">🗓️ Squad Calendar</h1>
-                            <p id="userDisplayName" class="text-sm sm:text-base opacity-90 font-medium truncate max-w-[180px] sm:max-w-none"></p>
+                            <h1 class="text-xl sm:text-2xl font-bold">🗓️ Calendar</h1>
+                            <p id="userDisplayName" class="text-sm sm:text-base opacity-90 font-medium truncate max-w-[150px] sm:max-w-none"></p>
                             <p id="adminStatusBadge" class="text-xs font-bold mt-1 hidden">🔧 ADMIN MODE</p>
                         </div>
                     </div>
-                    <div class="flex gap-2 sm:gap-3 items-center flex-wrap">
+                    <!-- Desktop buttons (visible on tablet/desktop) -->
+                    <div class="hidden md:flex gap-2 sm:gap-3 items-center flex-wrap">
                         <div id="adminToggleContainer" class="hidden items-center gap-2 bg-white/20 px-3 py-1.5 rounded-lg">
                             <span class="text-xs font-medium">👁️ Admin</span>
                             <label class="admin-toggle"><input type="checkbox" id="adminViewToggle"><span class="admin-toggle-slider"></span></label>
@@ -85,41 +120,8 @@
                     <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-blue-400 inline-block"></span> You're free</span>
                     <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span> Friends also free</span>
                     <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-red-400 inline-block"></span> You're busy</span>
-                    <span class="opacity-60">👆 Click any day</span>
                 </div>
             </div>
-
-            <!-- Push Notification Banner -->
-            <div id="pushBanner" class="hidden fixed top-20 right-4 z-50 max-w-sm rounded-lg shadow-lg p-4 animate-slide-in" style="background:var(--card); border-left: 4px solid var(--bp); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);">
-                <div class="flex items-start gap-3">
-                    <div class="text-2xl">🔔</div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-sm mb-1" style="color:var(--tp)">Stay Updated!</h4>
-                        <p class="text-xs mb-2" style="color:var(--ts)">Get notifications for friend requests, events, and RSVPs - even when you're not on the site.</p>
-                        <div class="flex gap-2 mt-2">
-                            <button id="enablePushFromBanner" class="text-white px-3 py-1 rounded text-xs font-medium transition" style="background:var(--bp)">✅ Enable</button>
-                            <button id="dismissPushBanner" class="px-3 py-1 rounded text-xs font-medium transition border" style="border-color:var(--bc); color:var(--ts)">Not now</button>
-                        </div>
-                    </div>
-                    <button id="closePushBanner" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
-                </div>
-            </div>
-
-            <style>
-            @keyframes slideIn {
-                from {
-                    transform: translateX(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
-            }
-            .animate-slide-in {
-                animation: slideIn 0.3s ease-out;
-            }
-            </style>
 
             <!-- Calendar -->
             <div id="calendar" class="p-2 sm:p-4" style="min-height:500px"></div>
@@ -361,6 +363,77 @@
             </div>
         </div>
     </div>
+
+    <!-- Mobile Menu Button (only visible on mobile) -->
+    <button id="mobileMenuBtn" onclick="window.openMobileMenu()" class="md:hidden fixed top-4 right-4 w-10 h-10 rounded-full shadow-lg flex items-center justify-center z-50 transition-all duration-200" style="background: linear-gradient(135deg, var(--hg-s), var(--hg-e)); box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: none; cursor: pointer;">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+    </button>
+
+    <!-- Mobile Bottom Sheet Menu -->
+    <div id="mobileBottomSheet" class="hidden fixed inset-x-0 bottom-0 z-50 transform transition-transform duration-300 translate-y-full" style="background: var(--card); border-radius: 20px 20px 0 0; border-top: 1px solid var(--bc);">
+        <div class="p-4">
+            <!-- Drag handle -->
+            <div class="flex justify-center mb-4">
+                <div class="w-12 h-1 rounded-full" style="background: var(--bc);"></div>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="text-center mb-2">
+                    <p class="text-xs" style="color: var(--ts)">Menu</p>
+                </div>
+                
+                <!-- Friends Button -->
+                <button id="mobileFriendsBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/5" style="border: 1px solid var(--bc);">
+                    <span class="text-2xl">👥</span>
+                    <div class="flex-1 text-left">
+                        <span class="text-sm font-medium" style="color: var(--tp)">Friends</span>
+                        <p class="text-xs" style="color: var(--ts)">Manage your friends</p>
+                    </div>
+                    <span class="text-lg" style="color: var(--ts);">→</span>
+                </button>
+                
+                <!-- Theme Button -->
+                <button id="mobileThemeBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/5" style="border: 1px solid var(--bc);">
+                    <span class="text-2xl">🎨</span>
+                    <div class="flex-1 text-left">
+                        <span class="text-sm font-medium" style="color: var(--tp)">Theme</span>
+                        <p class="text-xs" style="color: var(--ts)">Change app appearance</p>
+                    </div>
+                    <span class="text-lg" style="color: var(--ts);">→</span>
+                </button>
+                
+                <!-- Notifications Button -->
+                <button id="mobileNotificationsBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/5" style="border: 1px solid var(--bc);">
+                    <span class="text-2xl">🔔</span>
+                    <div class="flex-1 text-left">
+                        <span class="text-sm font-medium" style="color: var(--tp)">Notifications</span>
+                        <p class="text-xs" style="color: var(--ts)">View your alerts</p>
+                    </div>
+                    <span class="text-lg" style="color: var(--ts);">→</span>
+                </button>
+                
+                <!-- Sign Out Button -->
+                <button id="mobileLogoutBtn" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-red-500/10" style="border: 1px solid var(--bc);">
+                    <span class="text-2xl">🚪</span>
+                    <div class="flex-1 text-left">
+                        <span class="text-sm font-medium" style="color: var(--tp)">Sign Out</span>
+                        <p class="text-xs" style="color: var(--ts)">Exit your account</p>
+                    </div>
+                    <span class="text-lg" style="color: var(--ts);">→</span>
+                </button>
+            </div>
+            
+            <!-- Cancel button -->
+            <button id="closeBottomSheet" class="w-full mt-4 py-3 rounded-xl font-medium transition-all duration-200" style="background: var(--bc); color: var(--tp);">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Overlay for bottom sheet -->
+    <div id="bottomSheetOverlay" class="hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 opacity-0"></div>
 
     <!-- Event RSVP Modal -->
     <div id="eventModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

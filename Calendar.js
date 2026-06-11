@@ -123,12 +123,9 @@ async function initOneSignal() {
     
     try {
         const OneSignal = await window.OneSignalDeferred[0];
-        
-        // Get user's OneSignal subscription ID
         const subscriptionId = await OneSignal.getExternalUserId();
         
         if (subscriptionId) {
-            // Save to Firestore
             const userRef = doc(db, "users", currentUser.email);
             await setDoc(userRef, { 
                 onesignalId: subscriptionId,
@@ -144,7 +141,7 @@ async function initOneSignal() {
     }
 }
 
-// Enable push notifications (called from button)
+// Enable push notifications
 async function enablePushNotifications() {
     if (!window.OneSignalDeferred) {
         showToastMessage("Please wait, notifications are loading...", "info");
@@ -193,32 +190,23 @@ async function sendPushNotification(toEmail, title, message) {
             return;
         }
         
-        // Send via OneSignal API - YOU NEED TO GET YOUR REAL API KEY FROM ONESIGNAL DASHBOARD
-        // Go to OneSignal Dashboard > Settings > Keys & IDs > REST API Key
         const response = await fetch('https://onesignal.com/api/v1/notifications', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'os_v2_app_wfx6t5rtkzbwjbrctqzx2r2ciit2xltmtjses5u2ko7nls5tlfn6d55abzitsihb5elio64ck75jcblpuoty5gmbpg7nuby4z7zkcfy' // REPLACE THIS!
+                'Authorization': 'os_v2_app_wfx6t5rtkzbwjbrctqzx2r2ciit2xltmtjses5u2ko7nls5tlfn6d55abzitsihb5elio64ck75jcblpuoty5gmbpg7nuby4z7zkcfy'
             },
             body: JSON.stringify({
                 app_id: 'b16fe9f6-3356-4364-8622-9c337d474242',
                 include_external_user_ids: [onesignalId],
                 headings: { en: title },
                 contents: { en: message },
-                web_buttons: [
-                    {
-                        id: "open-calendar",
-                        text: "Open Calendar",
-                        url: window.location.href
-                    }
-                ]
+                web_buttons: [{ id: "open-calendar", text: "Open Calendar", url: window.location.href }]
             })
         });
         
         const result = await response.json();
         console.log("Push notification sent:", result);
-        
     } catch (error) {
         console.error("Failed to send push:", error);
     }
@@ -240,6 +228,129 @@ function updatePushStatusUI(enabled) {
     }
 }
 
+// ==================== MOBILE MENU FUNCTIONS ====================
+
+window.openMobileMenu = function() {
+    console.log("openMobileMenu called");
+    
+    // Add click feedback to button
+    const menuBtn = document.getElementById('mobileMenuBtn');
+    if (menuBtn) {
+        menuBtn.classList.add('clicked');
+        setTimeout(() => {
+            menuBtn.classList.remove('clicked');
+        }, 200);
+    }
+    
+    const sheet = document.getElementById('mobileBottomSheet');
+    const overlay = document.getElementById('bottomSheetOverlay');
+    
+    if (sheet) {
+        sheet.classList.remove('hidden');
+        setTimeout(() => {
+            sheet.classList.add('show');
+        }, 10);
+    }
+    if (overlay) {
+        overlay.classList.remove('hidden');
+        setTimeout(() => {
+            overlay.classList.add('show');
+        }, 10);
+    }
+    document.body.style.overflow = 'hidden';
+};
+
+window.closeMobileMenu = function() {
+    const sheet = document.getElementById('mobileBottomSheet');
+    const overlay = document.getElementById('bottomSheetOverlay');
+    
+    if (sheet) {
+        sheet.classList.remove('show');
+        setTimeout(() => {
+            sheet.classList.add('hidden');
+        }, 300);
+    }
+    if (overlay) {
+        overlay.classList.remove('show');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
+    }
+    document.body.style.overflow = '';
+};
+
+// Initialize mobile menu buttons
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM loaded - initializing mobile menu");
+    
+    // Test if button exists
+    const menuBtn = document.getElementById('mobileMenuBtn');
+    if (menuBtn) {
+        console.log("✅ Mobile menu button found!");
+        
+        // Add test click handler
+        menuBtn.addEventListener('click', function(e) {
+            console.log("🔴 Button clicked via event listener!");
+        });
+    } else {
+        console.log("❌ Mobile menu button NOT found!");
+    }
+    
+    // Close button
+    const closeBtn = document.getElementById('closeBottomSheet');
+    if (closeBtn) {
+        closeBtn.onclick = () => window.closeMobileMenu();
+    }
+    
+    // Overlay
+    const overlay = document.getElementById('bottomSheetOverlay');
+    if (overlay) {
+        overlay.onclick = () => window.closeMobileMenu();
+    }
+    
+    // Mobile menu buttons
+    const mobileFriendsBtn = document.getElementById('mobileFriendsBtn');
+    if (mobileFriendsBtn) {
+        mobileFriendsBtn.onclick = () => {
+            console.log("Mobile Friends button clicked");
+            const friendsBtn = document.getElementById('friendsBtn');
+            if (friendsBtn) friendsBtn.click();
+            window.closeMobileMenu();
+        };
+    }
+    
+    const mobileThemeBtn = document.getElementById('mobileThemeBtn');
+    if (mobileThemeBtn) {
+        mobileThemeBtn.onclick = () => {
+            console.log("Mobile Theme button clicked");
+            const themeBtn = document.getElementById('themeBtn');
+            if (themeBtn) themeBtn.click();
+            window.closeMobileMenu();
+        };
+    }
+    
+    const mobileNotificationsBtn = document.getElementById('mobileNotificationsBtn');
+    if (mobileNotificationsBtn) {
+        mobileNotificationsBtn.onclick = () => {
+            console.log("Mobile Notifications button clicked");
+            const notificationBell = document.getElementById('notificationBell');
+            if (notificationBell) notificationBell.click();
+            window.closeMobileMenu();
+        };
+    }
+    
+    const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+    if (mobileLogoutBtn) {
+        mobileLogoutBtn.onclick = () => {
+            console.log("Mobile Logout button clicked");
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.click();
+            window.closeMobileMenu();
+        };
+    }
+});
+
+
 // ==================== THEME FUNCTIONS ====================
 
 function setTheme(name) {
@@ -255,9 +366,7 @@ function setTheme(name) {
 
 function getDisplayName(email) {
     const profile = allUserProfiles[email];
-    if (profile?.displayName) {
-        return profile.displayName;
-    }
+    if (profile?.displayName) return profile.displayName;
     return email.split('@')[0];
 }
 
@@ -295,10 +404,8 @@ async function updateDisplayName(email, newDisplayName) {
     
     if (email === currentUser?.email) {
         document.getElementById('userDisplayName').innerText = newDisplayName;
-        
         const myAvatar = document.getElementById('myAvatar');
         const avatarFallback = document.getElementById('avatarFallback');
-        
         if (!allUserProfiles[email]?.photoURL && !currentUser.photoURL) {
             avatarFallback.innerText = newDisplayName.charAt(0).toUpperCase();
         }
@@ -310,14 +417,11 @@ async function updateDisplayName(email, newDisplayName) {
 async function createNotification(toEmail, title, message, type) {
     if (toEmail === currentUser?.email) return;
     
-    // Send in-app notification
     await addDoc(collection(db, "notifications", toEmail, "items"), {
         title, message, type,
         read: false,
         createdAt: serverTimestamp()
     });
-    
-    // Send web push notification via OneSignal
     await sendPushNotification(toEmail, title, message);
 }
 
@@ -666,8 +770,6 @@ function applyDayHighlights() {
             const blocks = (mine?.blocks || []).filter(b => b.date === d);
             const freeBlocks = blocks.filter(b => b.type === 'free');
             const busyBlocks = blocks.filter(b => b.type === 'busy');
-            const hasFree = freeBlocks.length > 0;
-            const hasBusy = busyBlocks.length > 0;
             const hasFullDayFree = freeBlocks.some(b => b.from === '00:00' && b.to === '23:59');
             const hasFullDayBusy = busyBlocks.some(b => b.from === '00:00' && b.to === '23:59');
             
@@ -688,22 +790,29 @@ function applyDayHighlights() {
                 if (hasMutualFree) break;
             }
             
-            day.classList.remove('you-free-highlight', 'you-busy-highlight', 'mutual-free-highlight', 'everyone-free-highlight', 'mixed-availability');
+            day.classList.remove('you-free-highlight', 'you-busy-highlight', 'mutual-free-highlight', 'everyone-free-highlight');
             day.style.background = '';
+            day.style.border = '';
             
             if (c.everyoneFree[d]) {
                 day.classList.add('everyone-free-highlight');
-            } else if (hasFree && hasBusy) {
-                day.classList.add('mixed-availability');
-                let gradientParts = [];
-                let sortedBlocks = [...freeBlocks, ...busyBlocks].sort((a, b) => a.from.localeCompare(b.from));
+            } else if (freeBlocks.length > 0 && busyBlocks.length > 0 && !hasFullDayFree && !hasFullDayBusy) {
+                const allBlocks = [...freeBlocks, ...busyBlocks].sort((a, b) => a.from.localeCompare(b.from));
+                let gradientStops = [];
+                let currentPercent = 0;
+                const dayHeight = 100;
                 
-                for (let i = 0; i < sortedBlocks.length; i++) {
-                    const block = sortedBlocks[i];
-                    const fromHour = parseInt(block.from.split(':')[0]);
-                    const toHour = parseInt(block.to.split(':')[0]);
-                    const fromPercent = (fromHour / 24) * 100;
-                    const toPercent = (toHour / 24) * 100;
+                for (let i = 0; i < allBlocks.length; i++) {
+                    const block = allBlocks[i];
+                    const fromHour = parseInt(block.from.split(':')[0]) + (parseInt(block.from.split(':')[1]) / 60);
+                    const toHour = parseInt(block.to.split(':')[0]) + (parseInt(block.to.split(':')[1]) / 60);
+                    const fromPercent = (fromHour / 24) * dayHeight;
+                    const toPercent = (toHour / 24) * dayHeight;
+                    
+                    if (fromPercent > currentPercent && i > 0) {
+                        const prevColor = allBlocks[i-1].type === 'free' ? '#3b82f6' : '#ef4444';
+                        gradientStops.push(`${prevColor} ${currentPercent}%, ${prevColor} ${fromPercent}%`);
+                    }
                     
                     let color;
                     if (block.type === 'busy') {
@@ -722,21 +831,29 @@ function applyDayHighlights() {
                         }
                         color = isMutual ? '#eab308' : '#3b82f6';
                     }
-                    gradientParts.push(`${color} ${fromPercent}%, ${color} ${toPercent}%`);
+                    
+                    gradientStops.push(`${color} ${fromPercent}%, ${color} ${toPercent}%`);
+                    currentPercent = toPercent;
                 }
                 
-                day.style.background = `linear-gradient(to bottom, ${gradientParts.join(', ')})`;
-                day.style.border = hasMutualFree ? '2px solid #eab308' : '2px solid #f59e0b';
+                if (currentPercent < dayHeight) {
+                    const lastColor = allBlocks[allBlocks.length - 1].type === 'free' ? '#3b82f6' : '#ef4444';
+                    gradientStops.push(`${lastColor} ${currentPercent}%, ${lastColor} ${dayHeight}%`);
+                }
+                
+                day.style.background = `linear-gradient(to bottom, ${gradientStops.join(', ')})`;
+                day.style.backgroundSize = '100% 100%';
+                day.style.backgroundRepeat = 'no-repeat';
+                day.style.border = '2px solid #f59e0b';
                 
                 const freeHours = freeBlocks.map(b => `${b.from}–${b.to}`).join(', ');
                 const busyHours = busyBlocks.map(b => `${b.from}–${b.to}`).join(', ');
-                day.setAttribute('title', `🔵 Free: ${freeHours || 'None'}\n🔴 Busy: ${busyHours || 'None'}${hasMutualFree ? '\n🟡 Friend also free' : ''}`);
-                
+                day.setAttribute('title', `🔵 Free: ${freeHours}\n🔴 Busy: ${busyHours}`);
             } else if (hasMutualFree && !hasFullDayFree) {
                 day.classList.add('mutual-free-highlight');
-            } else if (hasFree || hasFullDayFree) {
+            } else if (freeBlocks.length > 0 || hasFullDayFree) {
                 day.classList.add('you-free-highlight');
-            } else if (hasBusy || hasFullDayBusy) {
+            } else if (busyBlocks.length > 0 || hasFullDayBusy) {
                 day.classList.add('you-busy-highlight');
             }
         });
@@ -1350,34 +1467,25 @@ function switchTab(name) {
 
 function setupEventListeners() {
     const profileBtn = document.getElementById('profileBtn');
-    if (profileBtn) {
-        profileBtn.onclick = () => openProfileModal();
-    }
+    if (profileBtn) profileBtn.onclick = () => openProfileModal();
     
     document.getElementById('closeProfileModal')?.addEventListener('click', () => {
         document.getElementById('profileModal').classList.add('hidden');
     });
-    
     document.getElementById('closeProfileModalBtn')?.addEventListener('click', () => {
         document.getElementById('profileModal').classList.add('hidden');
     });
-    
     document.getElementById('saveProfileBtn')?.addEventListener('click', saveProfileChanges);
     
     const profileAvatarContainer = document.getElementById('profileAvatarContainer');
     const profilePhotoUpload = document.getElementById('profilePhotoUpload');
     
     if (profileAvatarContainer) {
-        profileAvatarContainer.addEventListener('click', () => {
-            profilePhotoUpload.click();
-        });
+        profileAvatarContainer.addEventListener('click', () => profilePhotoUpload.click());
     }
-    
     if (profilePhotoUpload) {
         profilePhotoUpload.addEventListener('change', (e) => {
-            if (e.target.files && e.target.files[0]) {
-                uploadProfilePhoto(e.target.files[0]);
-            }
+            if (e.target.files && e.target.files[0]) uploadProfilePhoto(e.target.files[0]);
         });
     }
     
@@ -1416,7 +1524,6 @@ function setupEventListeners() {
     
     const setFreeBtn = document.getElementById('setFreeBtn');
     if (setFreeBtn) setFreeBtn.onclick = async () => { if (currentSelectedDay) await saveBlock(currentSelectedDay, "00:00", "23:59", "free"); };
-    
     const setBusyBtn = document.getElementById('setBusyBtn');
     if (setBusyBtn) setBusyBtn.onclick = async () => { if (currentSelectedDay) await saveBlock(currentSelectedDay, "00:00", "23:59", "busy"); };
     
@@ -1540,11 +1647,8 @@ function setupEventListeners() {
     if (searchBtn) {
         searchBtn.onclick = () => {
             const searchValue = document.getElementById('searchEmailInput').value.trim();
-            if (searchValue) {
-                searchUser(searchValue);
-            } else {
-                alert("Enter a name or email address to search");
-            }
+            if (searchValue) searchUser(searchValue);
+            else alert("Enter a name or email address to search");
         };
     }
     
@@ -1555,18 +1659,10 @@ function setupEventListeners() {
     const enablePushBtn = document.getElementById('enablePushBtn');
     const disablePushBtn = document.getElementById('disablePushBtn');
     
-    if (enablePushFromBanner) {
-        enablePushFromBanner.addEventListener('click', enablePushNotifications);
-    }
-    if (dismissPushBanner) {
-        dismissPushBanner.addEventListener('click', permanentlyDismissPushBanner);
-    }
-    if (closePushBanner) {
-        closePushBanner.addEventListener('click', permanentlyDismissPushBanner);
-    }
-    if (enablePushBtn) {
-        enablePushBtn.addEventListener('click', enablePushNotifications);
-    }
+    if (enablePushFromBanner) enablePushFromBanner.addEventListener('click', enablePushNotifications);
+    if (dismissPushBanner) dismissPushBanner.addEventListener('click', permanentlyDismissPushBanner);
+    if (closePushBanner) closePushBanner.addEventListener('click', permanentlyDismissPushBanner);
+    if (enablePushBtn) enablePushBtn.addEventListener('click', enablePushNotifications);
     if (disablePushBtn) {
         disablePushBtn.addEventListener('click', async () => {
             if (confirm("Disable notifications?")) {
@@ -1576,6 +1672,55 @@ function setupEventListeners() {
                 showToastMessage("Notifications disabled", "info");
             }
         });
+    }
+    
+    // Setup mobile menu buttons (direct onclick for reliability)
+    const mobileFriendsBtn = document.getElementById('mobileFriendsBtn');
+    if (mobileFriendsBtn) {
+        mobileFriendsBtn.onclick = () => {
+            const friendsBtn = document.getElementById('friendsBtn');
+            if (friendsBtn) friendsBtn.click();
+            closeMobileMenu();
+        };
+    }
+    
+    const mobileThemeBtn = document.getElementById('mobileThemeBtn');
+    if (mobileThemeBtn) {
+        mobileThemeBtn.onclick = () => {
+            const themeBtn = document.getElementById('themeBtn');
+            if (themeBtn) themeBtn.click();
+            closeMobileMenu();
+        };
+    }
+    
+    const mobileNotificationsBtn = document.getElementById('mobileNotificationsBtn');
+    if (mobileNotificationsBtn) {
+        mobileNotificationsBtn.onclick = () => {
+            const notificationBell = document.getElementById('notificationBell');
+            if (notificationBell) notificationBell.click();
+            closeMobileMenu();
+        };
+    }
+    
+    const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+    if (mobileLogoutBtn) {
+        mobileLogoutBtn.onclick = () => {
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.click();
+            closeMobileMenu();
+        };
+    }
+    
+    // Close button for bottom sheet
+    const closeBottomSheetBtn = document.getElementById('closeBottomSheet');
+    if (closeBottomSheetBtn) {
+        closeBottomSheetBtn.onclick = () => closeMobileMenu();
+    }
+    
+    // Overlay click
+    const bottomSheetOverlay = document.getElementById('bottomSheetOverlay');
+    if (bottomSheetOverlay) {
+        bottomSheetOverlay.onclick = () => closeMobileMenu();
     }
 }
 
@@ -1614,7 +1759,6 @@ onAuthStateChanged(auth, async (user) => {
             avatarFallback.style.display = 'flex';
         }
         
-        // ADMIN CHECK - ONLY show admin elements for specific admin emails
         const adminEmails = ['luara0511f@gmail.com'];
         isAdmin = adminEmails.includes(user.email);
         
@@ -1640,9 +1784,7 @@ onAuthStateChanged(auth, async (user) => {
         
         const profileSnap = await getDocs(collection(db, "userProfiles"));
         allUserProfiles = {};
-        profileSnap.forEach(doc => {
-            allUserProfiles[doc.id] = doc.data();
-        });
+        profileSnap.forEach(doc => { allUserProfiles[doc.id] = doc.data(); });
         
         const userScheduleRef = doc(db, "schedules", user.email);
         const userScheduleSnap = await getDoc(userScheduleRef);
@@ -1668,26 +1810,16 @@ onAuthStateChanged(auth, async (user) => {
         const schedulesQuery = collection(db, "schedules");
         const schedulesUnsub = onSnapshot(schedulesQuery, (snapshot) => {
             allSchedules = [];
-            snapshot.forEach(doc => {
-                allSchedules.push(doc.data());
-            });
-            if (!currentCalendar) {
-                initCalendar();
-            } else {
-                refreshCalendarData();
-            }
+            snapshot.forEach(doc => { allSchedules.push(doc.data()); });
+            if (!currentCalendar) { initCalendar(); } else { refreshCalendarData(); }
             updateStatsBar();
         });
         
         const eventsQuery = collection(db, "events");
         const eventsUnsub = onSnapshot(eventsQuery, (snapshot) => {
             allEvents = [];
-            snapshot.forEach(doc => {
-                allEvents.push({ id: doc.id, ...doc.data() });
-            });
-            if (currentCalendar) {
-                refreshCalendarData();
-            }
+            snapshot.forEach(doc => { allEvents.push({ id: doc.id, ...doc.data() }); });
+            if (currentCalendar) { refreshCalendarData(); }
         });
         
         const userListenerUnsub = onSnapshot(doc(db, "users", user.email), (snap) => {
@@ -1697,9 +1829,7 @@ onAuthStateChanged(auth, async (user) => {
                 sentRequests = snap.data().sentRequests || [];
                 updateFriendsUI();
                 updateRequestBadge();
-                if (currentCalendar) {
-                    refreshCalendarData();
-                }
+                if (currentCalendar) { refreshCalendarData(); }
                 updateStatsBar();
             }
         });
@@ -1716,30 +1846,22 @@ onAuthStateChanged(auth, async (user) => {
         updateStatsBar();
         setupEventListeners();
         
-        // Check push notification status
         const userDoc = await getDoc(doc(db, "users", user.email));
         const pushEnabled = userDoc.data()?.pushEnabled;
         
         if (pushEnabled) {
             updatePushStatusUI(true);
-            // Initialize OneSignal if enabled
-            setTimeout(() => {
-                initOneSignal();
-            }, 1000);
+            setTimeout(() => { initOneSignal(); }, 1000);
         } else {
             updatePushStatusUI(false);
             const bannerDismissed = localStorage.getItem('pushBannerDismissed');
             if (!bannerDismissed) {
-                setTimeout(() => {
-                    showPushBanner();
-                }, 2000);
+                setTimeout(() => { showPushBanner(); }, 2000);
             }
         }
         
     } else {
-        if (window.cleanupListeners) {
-            window.cleanupListeners();
-        }
+        if (window.cleanupListeners) { window.cleanupListeners(); }
         currentUser = null;
         isAdmin = false;
         adminViewEnabled = false;
@@ -1757,7 +1879,24 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Add login button handler AFTER everything is loaded
+// ==================== INITIALIZE MOBILE MENU BUTTON ====================
+// Direct onclick on the button element for reliability
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (mobileMenuBtn) {
+        mobileMenuBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("Menu button clicked via direct onclick");
+            openMobileMenu();
+        };
+        console.log("Mobile menu button direct onclick attached");
+    } else {
+        console.log("Mobile menu button not found");
+    }
+});
+
+// Login button handler
 document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('googleLoginBtn');
     if (loginBtn) {
@@ -1766,9 +1905,6 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const result = await signInWithPopup(auth, provider);
                 console.log("Login successful:", result.user.email);
-                if ("Notification" in window && Notification.permission === "default") {
-                    Notification.requestPermission();
-                }
             } catch (error) {
                 console.error("Login error:", error);
                 alert("Login failed: " + error.message);
